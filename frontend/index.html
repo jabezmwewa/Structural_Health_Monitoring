@@ -595,15 +595,9 @@
         /**
          * Get mock sensor data for development
          */
-        function getMockSensorData() {
-            return {
-                vibration: Math.random() * 10,
-                strain: Math.random() * 100,
-                temperature: 20 + Math.random() * 10,
-                humidity: 40 + Math.random() * 40,
-                pressure: 100 + Math.random() * 10,
-                timestamp: new Date().toISOString()
-            };
+        async function fetchSensorData() {
+            const res = await fetch('/api/latest');
+        return await res.json();
         }
 
         /**
