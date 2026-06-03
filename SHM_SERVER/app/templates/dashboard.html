@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structural Health Monitoring System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .data-value {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .pulse-glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+    <!-- Navigation Bar -->
+    <nav class="bg-slate-950 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-blue-500 p-2 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold">SHM System</h1>
+                </div>
+                <ul class="hidden md:flex space-x-6">
+                    <li><a href="#home" class="hover:text-blue-400 transition">Home</a></li>
+                    <li><a href="#features" class="hover:text-blue-400 transition">Features</a></li>
+                    <li><a href="#dashboard" class="hover:text-blue-400 transition">Dashboard</a></li>
+                    <li><a href="#about" class="hover:text-blue-400 transition">About</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="min-h-screen flex items-center justify-center px-4">
+        <div class="text-center max-w-3xl mx-auto">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Structural Health Monitoring
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-8">
+                Real-time monitoring and anomaly detection for critical infrastructure
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#dashboard" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition transform hover:scale-105">
+                    Access Dashboard
+                </a>
+                <a href="#features" class="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-8 rounded-lg transition">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-4 bg-slate-800/50">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl font-bold mb-12 text-center">Key Features</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Feature 1 -->
+                <div class="bg-slate-700/50 p-6 rounded-lg hover:bg-slate-600/50 transition backdrop-blur border border-slate-600">
+                    <div class="bg-blue-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Real-time Data Collection</h3>
+                    <p class="text-gray-400">Continuous monitoring of vibration, strain, temperature, humidity, and pressure</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-slate-700/50 p-6 rounded-lg hover:bg-slate-600/50 transition backdrop-blur border border-slate-600">
+                    <div class="bg-red-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Anomaly Detection</h3>
+                    <p class="text-gray-400">Intelligent algorithms to identify structural issues before they become critical</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-slate-700/50 p-6 rounded-lg hover:bg-slate-600/50 transition backdrop-blur border border-slate-600">
+                    <div class="bg-green-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Live Dashboard</h3>
+                    <p class="text-gray-400">Visualize real-time data and trends with interactive charts and metrics</p>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="bg-slate-700/50 p-6 rounded-lg hover:bg-slate-600/50 transition backdrop-blur border border-slate-600">
+                    <div class="bg-yellow-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5.951-1.429 5.951 1.429a1 1 0 001.169-1.409l-7-14z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Real-time Alerts</h3>
+                    <p class="text-gray-400">Instant notifications when anomalies or thresholds are detected</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- Dashboard Header -->
+            <div class="mb-8">
+                <h2 class="text-4xl font-bold mb-2">Real-time Monitoring Dashboard</h2>
+                <p class="text-gray-400">Live data from structural health monitoring sensors</p>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <!-- Vibration Card -->
+                <div class="bg-gradient-to-br from-blue-500/20 to-blue-600/10 p-6 rounded-lg border border-blue-500/30 backdrop-blur hover:border-blue-500/50 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-300">Vibration</h3>
+                        <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold mb-2" id="vibration-value">0.00</p>
+                    <p class="text-xs text-gray-400">mm/s | Normal</p>
+                </div>
+
+                <!-- Strain Card -->
+                <div class="bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 p-6 rounded-lg border border-cyan-500/30 backdrop-blur hover:border-cyan-500/50 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-300">Strain</h3>
+                        <svg class="w-5 h-5 text-cyan-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000-2H6a4 4 0 014 4v1H4V5zm-.5 6a.5.5 0 000 1h11a.5.5 0 000-1H3.5zM3 13a1 1 0 100 2h1.22l2.861-2.89a1.5 1.5 0 112.122 2.122L6.374 17H8a1 1 0 100-2H4a1 1 0 00-1 1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold mb-2" id="strain-value">0.00</p>
+                    <p class="text-xs text-gray-400">μm/m | Normal</p>
+                </div>
+
+                <!-- Temperature Card -->
+                <div class="bg-gradient-to-br from-orange-500/20 to-orange-600/10 p-6 rounded-lg border border-orange-500/30 backdrop-blur hover:border-orange-500/50 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-300">Temperature</h3>
+                        <svg class="w-5 h-5 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold mb-2" id="temperature-value">0.00</p>
+                    <p class="text-xs text-gray-400">°C | Normal</p>
+                </div>
+
+                <!-- Humidity Card -->
+                <div class="bg-gradient-to-br from-teal-500/20 to-teal-600/10 p-6 rounded-lg border border-teal-500/30 backdrop-blur hover:border-teal-500/50 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-300">Humidity</h3>
+                        <svg class="w-5 h-5 text-teal-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.4 4.476A2 2 0 016.97 3h6.06a2 2 0 011.57 3.476L9.7 16.314a2 2 0 11-3.4-2.628l4.59-5.776H6.97a1 1 0 110-2h.01L4.4 4.476z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold mb-2" id="humidity-value">0.00</p>
+                    <p class="text-xs text-gray-400">% | Normal</p>
+                </div>
+
+                <!-- Pressure Card -->
+                <div class="bg-gradient-to-br from-purple-500/20 to-purple-600/10 p-6 rounded-lg border border-purple-500/30 backdrop-blur hover:border-purple-500/50 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-300">Pressure</h3>
+                        <svg class="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a3 3 0 01.947 2.063.75.75 0 10.426-1.413 4.5 4.5 0 01-1.373-3.105.75.75 0 10-1.48.19.5.5 0 00.48.548h.003.006.013.027.041.055.066.078.089.101.122.132.15.158.163.164.165.165.154.142.125.1.069.03a.75.75 0 101.5-.001A.5.5 0 005.05 4.05zm3-4.8a.75.75 0 00-1.06 1.061A7.5 7.5 0 0119.5 10.5a7.5 7.5 0 01-12.51 5.689.75.75 0 101.061 1.06 9 9 0 10-2.6-15.52z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold mb-2" id="pressure-value">0.00</p>
+                    <p class="text-xs text-gray-400">kPa | Normal</p>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Vibration Chart -->
+                <div class="bg-slate-700/30 p-6 rounded-lg border border-slate-600 backdrop-blur">
+                    <h3 class="text-lg font-semibold mb-4">Vibration Trend (Last 24h)</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="vibrationChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Temperature & Humidity Chart -->
+                <div class="bg-slate-700/30 p-6 rounded-lg border border-slate-600 backdrop-blur">
+                    <h3 class="text-lg font-semibold mb-4">Temperature & Humidity (Last 24h)</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="tempHumidityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="bg-slate-700/30 p-6 rounded-lg border border-slate-600 backdrop-blur">
+                <h3 class="text-lg font-semibold mb-4">Recent Alerts</h3>
+                
+                <div id="alerts-container" class="space-y-3">
+                    <div class="bg-green-500/10 border border-green-500/30 p-4 rounded flex items-start space-x-3">
+                        <svg class="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-semibold">System Status: All Clear</p>
+                            <p class="text-xs text-gray-400 mt-1">No anomalies detected in the last hour</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 px-4 bg-slate-800/50">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-4xl font-bold mb-8 text-center">About the System</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-slate-700/30 p-8 rounded-lg border border-slate-600">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-400">The Challenge</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        Infrastructure in rapidly developing regions faces significant challenges from environmental stress and dynamic loads. Traditional reactive maintenance approaches lead to costly emergency repairs and safety hazards.
+                    </p>
+                </div>
+                
+                <div class="bg-slate-700/30 p-8 rounded-lg border border-slate-600">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-400">Our Solution</h3>
+                    <p class="text-gray-300 leading-relaxed">
+                        This embedded SHM system enables continuous, real-time monitoring of critical structural parameters, supporting early fault detection and proactive maintenance decisions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 p-8 rounded-lg border border-blue-500/20">
+                <h3 class="text-xl font-semibold mb-4">Monitored Parameters</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="text-center">
+                        <p class="text-blue-400 font-semibold">Vibration</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-blue-400 font-semibold">Strain</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-blue-400 font-semibold">Temperature</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-blue-400 font-semibold">Humidity</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-blue-400 font-semibold">Pressure</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 py-8 px-4 border-t border-slate-700">
+        <div class="max-w-6xl mx-auto text-center text-gray-400">
+            <p>&copy; 2026 Structural Health Monitoring System. All rights reserved. Last updated: <span id="last-update">now</span></p>
+        </div>
+    </footer>
+
+    <!-- Flask injects historical readings so charts render on first load -->
+    <script>
+        window.__INITIAL_DATA__ = {{ readings | tojson }};
+        window.__HEALTH_SCORE__ = {{ health_score | tojson }};
+    </script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <script>
+        // ============================================
+        // LEGACY STUBS — kept so nothing breaks
+        // All real logic is now in static/main.js
+        // ============================================
+
+        // Charts and polling are handled by main.js
+
+        /**
+         * Initialize dashboard on page load
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('SHM Application initialized');
+            initializeDashboard();
+        });
+
+        /**
+         * Main dashboard initialization
+         */
+        function initializeDashboard() {
+            // Setup smooth scroll navigation
+            setupSmoothScroll();
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Start updating data
+            updateAllMetrics();
+            
+            // Refresh data every 5 seconds
+            setInterval(updateAllMetrics, 5000);
+            
+            // Update timestamp
+            updateLastUpdate();
+            setInterval(updateLastUpdate, 1000);
+        }
+
+        /**
+         * Setup smooth scroll behavior for navigation links
+         */
+        function setupSmoothScroll() {
+            const links = document.querySelectorAll('a[href^="#"]');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href !== '#' && document.querySelector(href)) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        }
+
+        /**
+         * Initialize Chart.js charts
+         */
+        function initializeCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#d1d5db',
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(75, 85, 99, 0.2)' }
+                    },
+                    x: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(75, 85, 99, 0.2)' }
+                    }
+                }
+            };
+
+            // Vibration Chart
+            const vibrationCtx = document.getElementById('vibrationChart');
+            if (vibrationCtx) {
+                vibrationChart = new Chart(vibrationCtx, {
+                    type: 'line',
+                    data: {
+                        labels: generateTimeLabels(24),
+                        datasets: [{
+                            label: 'Vibration (mm/s)',
+                            data: generateMockData(24, 0, 20),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        ...chartOptions,
+                        plugins: {
+                            ...chartOptions.plugins,
+                            filler: { propagate: true }
+                        }
+                    }
+                });
+            }
+
+            // Temperature & Humidity Chart
+            const tempHumidityCtx = document.getElementById('tempHumidityChart');
+            if (tempHumidityCtx) {
+                tempHumidityChart = new Chart(tempHumidityCtx, {
+                    type: 'line',
+                    data: {
+                        labels: generateTimeLabels(24),
+                        datasets: [
+                            {
+                                label: 'Temperature (°C)',
+                                data: generateMockData(24, 15, 35),
+                                borderColor: '#f97316',
+                                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Humidity (%)',
+                                data: generateMockData(24, 30, 80),
+                                borderColor: '#14b8a6',
+                                backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                                tension: 0.4,
+                                fill: true,
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        ...chartOptions,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                position: 'left',
+                                ticks: { color: '#f97316' },
+                                grid: { color: 'rgba(75, 85, 99, 0.2)' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                position: 'right',
+                                ticks: { color: '#14b8a6' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        /**
+         * Update all metrics on dashboard
+         */
+        function updateAllMetrics() {
+            const data = getMockSensorData();
+            
+            // Update metric cards
+            updateMetricCard('vibration', data.vibration, 'mm/s');
+            updateMetricCard('strain', Math.random() * 500, 'μm/m');
+            updateMetricCard('temperature', data.temperature, '°C');
+            updateMetricCard('humidity', data.humidity, '%');
+            updateMetricCard('pressure', data.pressure, 'kPa');
+            
+            // Update alerts
+            updateAlerts(data);
+        }
+
+        /**
+         * Update individual metric card
+         */
+        function updateMetricCard(type, value, unit) {
+            const element = document.getElementById(`${type}-value`);
+            if (element) {
+                element.textContent = value.toFixed(2);
+                element.classList.add('data-value');
+                
+                setTimeout(() => {
+                    element.classList.remove('data-value');
+                }, 300);
+            }
+        }
+
+        /**
+         * Update alerts section
+         */
+        function updateAlerts(data) {
+            const container = document.getElementById('alerts-container');
+            if (!container) return;
+
+            const alerts = [];
+
+            // Check for anomalies
+            if (data.vibration > 15) {
+                alerts.push({
+                    type: 'warning',
+                    title: 'High Vibration Detected',
+                    message: `Vibration level at ${data.vibration.toFixed(2)} mm/s`,
+                    icon: '⚠️'
+                });
+            }
+
+            if (data.temperature > 40 || data.temperature < 5) {
+                alerts.push({
+                    type: 'warning',
+                    title: 'Temperature Out of Range',
+                    message: `Current temperature: ${data.temperature.toFixed(2)}°C`,
+                    icon: '🌡️'
+                });
+            }
+
+            if (data.humidity > 85 || data.humidity < 20) {
+                alerts.push({
+                    type: 'warning',
+                    title: 'Humidity Out of Range',
+                    message: `Current humidity: ${data.humidity.toFixed(2)}%`,
+                    icon: '💧'
+                });
+            }
+
+            // If no alerts, show all clear
+            if (alerts.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-green-500/10 border border-green-500/30 p-4 rounded flex items-start space-x-3">
+                        <svg class="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-semibold">System Status: All Clear</p>
+                            <p class="text-xs text-gray-400 mt-1">No anomalies detected</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Display alerts
+            container.innerHTML = alerts.map(alert => `
+                <div class="bg-yellow-500/10 border border-yellow-500/30 p-4 rounded flex items-start space-x-3">
+                    <span class="text-xl">${alert.icon}</span>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold">${alert.title}</p>
+                        <p class="text-xs text-gray-400 mt-1">${alert.message}</p>
+                    </div>
+                    <button class="text-yellow-400 hover:text-yellow-300 transition" onclick="this.parentElement.remove()">
+                        ✕
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * Generate time labels for charts (hours)
+         */
+        function generateTimeLabels(count) {
+            const labels = [];
+            const now = new Date();
+            for (let i = count - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 3600000);
+                labels.push(time.getHours() + ':00');
+            }
+            return labels;
+        }
+
+        /**
+         * Generate mock data for charts
+         */
+        function generateMockData(count, min, max) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push(Math.random() * (max - min) + min);
+            }
+            return data;
+        }
+
+        /**
+         * Get mock sensor data for development
+         */
+        function getMockSensorData() {
+            return {
+                vibration: Math.random() * 10,
+                strain: Math.random() * 100,
+                temperature: 20 + Math.random() * 10,
+                humidity: 40 + Math.random() * 40,
+                pressure: 100 + Math.random() * 10,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        /**
+         * Update last update timestamp
+         */
+        function updateLastUpdate() {
+            const element = document.getElementById('last-update');
+            if (element) {
+                const now = new Date();
+                element.textContent = now.toLocaleTimeString();
+            }
+        }
+    </script>
+</body>
+</html>
