@@ -21,3 +21,4 @@ instance/
 *.swp
 .idea/
 .vscode/
+.claude/

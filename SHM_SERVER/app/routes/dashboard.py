@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template
-from app.models import SensorReading, HealthScore
+
+from config import Config
+from app.models import Device, StructuralElement
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -7,26 +9,21 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/')
 def index():
     """
-    Serves the main SHM dashboard.
-    Passes the last 24 readings and the latest health score
-    into the template so charts render immediately on load.
+    Serves the SHM monitoring dashboard. Injects the device, its structural
+    elements, and the threshold specs so the page can paint immediately; live
+    values are then fetched from the /api/v2 endpoints by static/main.js.
     """
-    readings = (
-        SensorReading.query
-        .order_by(SensorReading.timestamp.desc())
-        .limit(24)
+    device = Device.query.order_by(Device.id).first()
+    elements = (
+        StructuralElement.query.filter_by(device_id=device.id)
+        .order_by(StructuralElement.id)
         .all()
-    )
-    readings_data = [r.to_dict() for r in reversed(readings)]
-
-    latest_health = (
-        HealthScore.query
-        .order_by(HealthScore.timestamp.desc())
-        .first()
+        if device else []
     )
 
     return render_template(
         'dashboard.html',
-        readings=readings_data,
-        health_score=latest_health.to_dict() if latest_health else None,
+        device=device.to_dict() if device else None,
+        elements=[e.to_dict() for e in elements],
+        thresholds=Config.THRESHOLD_SPECS,
     )

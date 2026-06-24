@@ -110,9 +110,9 @@ def _apply_alert(sample, element, param, value, status, spec):
         return
 
     threshold = _breached_threshold(value, spec, status)
-    where = f"{element.name} " if element is not None else ""
     unit = spec.get('unit', '')
-    message = f"{where}{param} {status}: {value:.2f} {unit} (limit {threshold})".strip()
+    # Element context is carried by element_id; keep the message about the signal.
+    message = f"{param} {status}: {value:.2f} {unit} (limit {threshold})".strip()
 
     if active is None:
         db.session.add(Alert(

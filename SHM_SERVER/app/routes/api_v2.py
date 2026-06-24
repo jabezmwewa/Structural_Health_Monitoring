@@ -116,15 +116,23 @@ def history():
         .all()
     )
 
-    # optional per-element strain, keyed by sample_id for alignment
-    strain_by_sample = {}
-    if element_id is not None and samples:
+    # strain per element (all elements, or one if element_id is given)
+    elements = StructuralElement.query.filter_by(device_id=device.id).order_by(StructuralElement.id).all()
+    if element_id is not None:
+        elements = [e for e in elements if e.id == element_id]
+
+    strain_map = {}   # (sample_id, element_id) -> microstrain
+    if elements and samples:
         sample_ids = [s.id for s in samples]
+        elem_ids = [e.id for e in elements]
         for m in StrainMeasurement.query.filter(
-            StrainMeasurement.element_id == element_id,
             StrainMeasurement.sample_id.in_(sample_ids),
+            StrainMeasurement.element_id.in_(elem_ids),
         ):
-            strain_by_sample[m.sample_id] = m.microstrain
+            strain_map[(m.sample_id, m.element_id)] = m.microstrain
+
+    env_fields = ['temperature', 'humidity', 'vibration', 'sound']
+    strain_fields = [f'strain:{e.id}' for e in elements]
 
     rows = []
     for s in samples:
@@ -133,14 +141,11 @@ def history():
             'temperature': s.temperature, 'humidity': s.humidity,
             'vibration': s.vibration, 'sound': s.sound,
         }
-        if element_id is not None:
-            row['strain'] = strain_by_sample.get(s.id)
+        for e in elements:
+            row[f'strain:{e.id}'] = strain_map.get((s.id, e.id))
         rows.append(row)
 
-    fields = ['temperature', 'humidity', 'vibration', 'sound']
-    if element_id is not None:
-        fields.append('strain')
-    rows = _downsample(rows, fields, max_points)
+    rows = _downsample(rows, env_fields + strain_fields, max_points)
 
     return jsonify({
         'device_id': device.id,
@@ -148,7 +153,12 @@ def history():
         'element_id': element_id,
         'count': len(rows),
         'timestamps': [r['timestamp'].isoformat() for r in rows],
-        'series': {f: [r[f] for r in rows] for f in fields},
+        'series': {f: [r[f] for r in rows] for f in env_fields},
+        'strains': [
+            {'element_id': e.id, 'name': e.name,
+             'values': [r[f'strain:{e.id}'] for r in rows]}
+            for e in elements
+        ],
     })
 
 
