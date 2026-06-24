@@ -1,5 +1,12 @@
 import os
 
+from dotenv import load_dotenv
+
+# Load variables from a local .env file (if present) so os.getenv() picks them up.
+# python-dotenv is already a project dependency; this makes `.env` take effect when
+# running via `python run.py` (Flask's CLI would auto-load it, but run.py does not).
+load_dotenv()
+
 
 class Config:
     # ── Flask ──────────────────────────────────────────────────────────────
