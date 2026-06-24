@@ -24,10 +24,12 @@ def create_app():
     from app.routes.alerts import alerts_bp
     from app.routes.dashboard import dashboard_bp
     from app.routes.sensor import sensor_bp
+    from app.routes.api_v2 import api_v2_bp
 
     app.register_blueprint(alerts_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(sensor_bp)
+    app.register_blueprint(api_v2_bp)
 
     from app.commands import seed_demo
     app.cli.add_command(seed_demo)

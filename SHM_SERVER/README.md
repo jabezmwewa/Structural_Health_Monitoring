@@ -58,6 +58,31 @@ The server starts on <http://localhost:2000>.
 | PATCH  | `/api/alerts/<id>/resolve`      | Mark an alert resolved                         |
 | GET    | `/`                             | Dashboard UI                                   |
 
+### v2 API (per-element)
+
+The v2 model represents one device with many structural elements (columns/slabs).
+Seed a device and its elements first:
+
+```bash
+flask seed-demo     # creates SHM Node 1 with Column A/B + Slab 1 (idempotent)
+```
+
+| Method | Path                                          | Purpose                                                |
+|--------|-----------------------------------------------|--------------------------------------------------------|
+| POST   | `/api/v2/ingest`                              | Ingest a per-element sample (env + strain per element) |
+| GET    | `/api/v2/latest`                              | Current snapshot: per-element status, health, alerts   |
+| GET    | `/api/v2/history?hours=&element_id=&max_points=` | Downsampled time-series for trend charts            |
+| GET    | `/api/v2/elements`                            | List structural elements                               |
+| GET    | `/api/v2/alerts?active=&element_id=&limit=`   | Alerts (active by default) with element names          |
+
+```bash
+curl -X POST http://localhost:2000/api/v2/ingest \
+  -H "Content-Type: application/json" \
+  -d '{"temperature":24.5,"humidity":55,"vibration":3.2,"sound":41,
+       "strains":[{"element":"Column A","microstrain":120},
+                  {"element":"Slab 1","microstrain":85}]}'
+```
+
 ### Example: post a reading
 
 ```bash
