@@ -33,8 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   refreshLatest();
   refreshAlerts();
+  refreshAnalysis();
   loadHistory(currentHours);
   setInterval(() => { refreshLatest(); refreshAlerts(); }, POLL_MS);
+  setInterval(refreshAnalysis, 30000);   // trends change slowly
 });
 
 // ── Static card scaffolding ──────────────────────────────────
@@ -164,6 +166,38 @@ async function resolveAlert(id) {
     refreshAlerts();
     refreshLatest();
   } catch (err) { console.error('resolve failed:', err); }
+}
+
+// ── AI Analysis: ranked likely causes ───────────────────────
+async function refreshAnalysis() {
+  try {
+    const d = await fetchJSON('/api/v2/analysis');
+    const list = document.getElementById('analysis-list');
+    const causes = d.diagnosis || [];
+    if (!causes.length) {
+      list.innerHTML = `<div class="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center gap-2">
+        <span class="dot d-ok"></span> No developing issues detected from current trends.</div>`;
+      return;
+    }
+    list.innerHTML = causes.map(causeCard).join('');
+  } catch (err) {
+    console.error('analysis failed:', err);
+  }
+}
+
+function causeCard(f) {
+  const sev = f.likelihood === 'High' ? 'critical' : f.likelihood === 'Moderate' ? 'warning' : 'low';
+  const evidence = f.evidence.map(e => `<li>${e}</li>`).join('');
+  return `
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 accent-${sev}">
+      <div class="flex items-center justify-between gap-2">
+        <p class="font-semibold">${f.cause}</p>
+        <span class="pill st-${sev}">${f.likelihood} · ${Math.round(f.score * 100)}%</span>
+      </div>
+      <ul class="text-sm text-slate-600 mt-2 space-y-1 list-disc ml-5">${evidence}</ul>
+      <p class="text-xs text-slate-400 mt-2">Affected: ${(f.affected || []).join(', ')}</p>
+      <p class="text-sm text-slate-700 mt-2">→ ${f.recommendation}</p>
+    </div>`;
 }
 
 // ── Charts ───────────────────────────────────────────────────
