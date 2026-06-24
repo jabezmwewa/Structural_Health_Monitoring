@@ -54,9 +54,40 @@ def receive_data():
     # 3. Check thresholds and create alerts if needed
     check_thresholds(reading)
 
+    # 4. Mirror into the v2 model so the per-element store fills from legacy posts
+    _mirror_legacy_to_v2(payload)
+
     db.session.commit()
 
     return jsonify({'status': 'ok', 'reading_id': reading.id}), 201
+
+
+def _mirror_legacy_to_v2(payload):
+    """
+    Copy a legacy flat payload into the v2 model so the per-element store fills
+    from existing /api/data posts. Strain is attached to the device's first
+    element; `sound` is left null (the legacy payload has no acoustic channel).
+    Skips silently if no device has been seeded yet.
+    """
+    device = Device.query.order_by(Device.id).first()
+    if device is None:
+        return
+    sample = Sample(
+        device_id   = device.id,
+        temperature = payload.get('temperature'),
+        humidity    = payload.get('humidity'),
+        vibration   = payload.get('vibration'),
+        sound       = None,
+    )
+    db.session.add(sample)
+    db.session.flush()
+    element = next(iter(device.elements), None)
+    if element is not None and payload.get('strain') is not None:
+        db.session.add(StrainMeasurement(
+            sample_id=sample.id, element_id=element.id,
+            microstrain=payload['strain'],
+        ))
+    device.last_seen = datetime.utcnow()
 
 
 @sensor_bp.route('/api/latest', methods=['GET'])
