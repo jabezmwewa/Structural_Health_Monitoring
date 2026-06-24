@@ -13,6 +13,7 @@ from app.models import (
     Device, StructuralElement, Sample, StrainMeasurement, Alert, HealthScore,
 )
 from app.services.evaluation import classify
+from app.services.trend_analysis import analyse_device
 from config import Config
 
 api_v2_bp = Blueprint('api_v2', __name__, url_prefix='/api/v2')
@@ -208,3 +209,13 @@ def alerts():
 
     rows = query.order_by(Alert.last_seen.desc()).limit(limit).all()
     return jsonify([a.to_dict() for a in rows])
+
+
+@api_v2_bp.route('/analysis', methods=['GET'])
+def analysis():
+    """Trend features per signal (early-warning view). hours = lookback (default 72)."""
+    device = _first_device()
+    if device is None:
+        return jsonify({'error': 'No device registered.'}), 404
+    hours = request.args.get('hours', 72, type=int)
+    return jsonify({'trends': analyse_device(device, hours)})
