@@ -14,6 +14,7 @@ from app.models import (
 )
 from app.services.evaluation import classify
 from app.services.trend_analysis import analyse_device
+from app.services.diagnosis import rank_causes
 from config import Config
 
 api_v2_bp = Blueprint('api_v2', __name__, url_prefix='/api/v2')
@@ -218,4 +219,5 @@ def analysis():
     if device is None:
         return jsonify({'error': 'No device registered.'}), 404
     hours = request.args.get('hours', 72, type=int)
-    return jsonify({'trends': analyse_device(device, hours)})
+    trends = analyse_device(device, hours)
+    return jsonify({'trends': trends, 'diagnosis': rank_causes(trends)})
