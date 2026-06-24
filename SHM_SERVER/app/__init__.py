@@ -31,7 +31,8 @@ def create_app():
     app.register_blueprint(sensor_bp)
     app.register_blueprint(api_v2_bp)
 
-    from app.commands import seed_demo
+    from app.commands import seed_demo, simulate
     app.cli.add_command(seed_demo)
+    app.cli.add_command(simulate)
 
     return app
