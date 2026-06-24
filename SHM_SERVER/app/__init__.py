@@ -29,4 +29,7 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(sensor_bp)
 
+    from app.commands import seed_demo
+    app.cli.add_command(seed_demo)
+
     return app
