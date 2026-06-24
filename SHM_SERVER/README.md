@@ -21,14 +21,31 @@ pip install -r requirements.txt
 cp .env.example .env               # then edit values as needed
 ```
 
+## Database
+
+Schema is managed by Flask-Migrate (Alembic), so changes are versioned and
+reversible. Create or update the local database by applying migrations:
+
+```bash
+export FLASK_APP=run.py        # Windows (PowerShell): $env:FLASK_APP="run.py"
+flask db upgrade
+```
+
+Run this once before the first start, and again after pulling changes that add
+new migrations. After editing the models, generate a migration with:
+
+```bash
+flask db migrate -m "describe the change"
+flask db upgrade
+```
+
 ## Run
 
 ```bash
 python run.py
 ```
 
-The server starts on <http://localhost:2000>. The SQLite database
-(`instance/shm.db`) is created automatically on first start.
+The server starts on <http://localhost:2000>.
 
 ## API
 
