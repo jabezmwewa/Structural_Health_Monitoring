@@ -27,11 +27,12 @@ class SensorReading(db.Model):
 
 
 class HealthScore(db.Model):
-    """Computed structural health index (0–100) per reading."""
+    """Computed structural health index (0–100) for a reading or a v2 sample."""
     __tablename__ = 'health_scores'
 
     id         = db.Column(db.Integer, primary_key=True)
-    reading_id = db.Column(db.Integer, db.ForeignKey('sensor_readings.id'), nullable=False)
+    reading_id = db.Column(db.Integer, db.ForeignKey('sensor_readings.id'), nullable=True)  # legacy
+    sample_id  = db.Column(db.Integer, db.ForeignKey('samples.id'), nullable=True)          # v2
     score      = db.Column(db.Float, nullable=False)    # 0 (critical) – 100 (healthy)
     label      = db.Column(db.String(20), nullable=False)  # "Healthy" | "Warning" | "Critical"
     timestamp  = db.Column(db.DateTime, default=datetime.utcnow)
@@ -42,6 +43,7 @@ class HealthScore(db.Model):
         return {
             'id':         self.id,
             'reading_id': self.reading_id,
+            'sample_id':  self.sample_id,
             'score':      self.score,
             'label':      self.label,
             'timestamp':  self.timestamp.isoformat(),
@@ -49,32 +51,51 @@ class HealthScore(db.Model):
 
 
 class Alert(db.Model):
-    """Triggered when a sensor value exceeds defined thresholds."""
+    """
+    A threshold breach. Legacy alerts link to a SensorReading; v2 alerts link to
+    a device/element/sample and follow an active→resolved lifecycle: one active
+    alert per (element, parameter), updated in place until the value returns to
+    ok, then auto-resolved.
+    """
     __tablename__ = 'alerts'
 
     id          = db.Column(db.Integer, primary_key=True)
-    reading_id  = db.Column(db.Integer, db.ForeignKey('sensor_readings.id'), nullable=False)
-    parameter   = db.Column(db.String(50), nullable=False)   # e.g. "temperature"
-    value       = db.Column(db.Float, nullable=False)
-    threshold   = db.Column(db.Float, nullable=False)
+    reading_id  = db.Column(db.Integer, db.ForeignKey('sensor_readings.id'), nullable=True)      # legacy
+    device_id   = db.Column(db.Integer, db.ForeignKey('devices.id'), nullable=True)              # v2
+    element_id  = db.Column(db.Integer, db.ForeignKey('structural_elements.id'), nullable=True)  # v2 (None = device-level)
+    sample_id   = db.Column(db.Integer, db.ForeignKey('samples.id'), nullable=True)              # v2 (last triggering sample)
+    parameter   = db.Column(db.String(50), nullable=False)   # e.g. "temperature", "strain"
+    value       = db.Column(db.Float, nullable=False)        # value at first trigger
+    last_value  = db.Column(db.Float, nullable=True)         # most recent value while active
+    threshold   = db.Column(db.Float, nullable=False)        # breached boundary
     severity    = db.Column(db.String(20), nullable=False)   # "warning" | "critical"
     message     = db.Column(db.String(255), nullable=False)
     resolved    = db.Column(db.Boolean, default=False)
-    timestamp   = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp   = db.Column(db.DateTime, default=datetime.utcnow)   # first seen
+    last_seen   = db.Column(db.DateTime, default=datetime.utcnow)   # most recent breach
+    resolved_at = db.Column(db.DateTime, nullable=True)
 
     reading = db.relationship('SensorReading', backref='alerts')
+    element = db.relationship('StructuralElement')
 
     def to_dict(self):
         return {
-            'id':         self.id,
-            'reading_id': self.reading_id,
-            'parameter':  self.parameter,
-            'value':      self.value,
-            'threshold':  self.threshold,
-            'severity':   self.severity,
-            'message':    self.message,
-            'resolved':   self.resolved,
-            'timestamp':  self.timestamp.isoformat(),
+            'id':          self.id,
+            'reading_id':  self.reading_id,
+            'device_id':   self.device_id,
+            'element_id':  self.element_id,
+            'element':     self.element.name if self.element else None,
+            'sample_id':   self.sample_id,
+            'parameter':   self.parameter,
+            'value':       self.value,
+            'last_value':  self.last_value,
+            'threshold':   self.threshold,
+            'severity':    self.severity,
+            'message':     self.message,
+            'resolved':    self.resolved,
+            'timestamp':   self.timestamp.isoformat(),
+            'last_seen':   self.last_seen.isoformat() if self.last_seen else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
         }
 
 

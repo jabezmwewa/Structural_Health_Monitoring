@@ -46,3 +46,18 @@ class Config:
         'VIBRATION_WARN':  15.0,    # warning level
         'VIBRATION_MAX':   25.0,    # critical level
     }
+
+    # ── v2 threshold specs (per-parameter, with a warning band) ─────────────
+    # Used by the v2 evaluation service. Each value's status is one of
+    # ok | warning | critical. Keys per parameter (all optional):
+    #   crit_low, warn_low, warn_high, crit_high
+    # A value is "critical" below crit_low / above crit_high, "warning" below
+    # warn_low / above warn_high, otherwise "ok". This single source of truth
+    # drives both alerting and the health score, so they cannot disagree.
+    THRESHOLD_SPECS = {
+        'strain':      {'unit': 'μm/m', 'warn_high': 400, 'crit_high': 500},
+        'temperature': {'unit': '°C',   'crit_low': 5,  'warn_low': 10, 'warn_high': 40, 'crit_high': 45},
+        'humidity':    {'unit': '%',    'crit_low': 20, 'warn_low': 30, 'warn_high': 75, 'crit_high': 85},
+        'vibration':   {'unit': 'mm/s', 'warn_high': 15, 'crit_high': 25},
+        'sound':       {'unit': 'dB',   'warn_high': 70, 'crit_high': 85},   # placeholder levels
+    }

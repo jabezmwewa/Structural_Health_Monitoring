@@ -11,6 +11,7 @@ from app.models import (
 )
 from app.services.health_score import compute_health_score
 from app.services.alert_engine import check_thresholds
+from app.services.evaluation import evaluate_sample
 
 sensor_bp = Blueprint('sensor', __name__)
 
@@ -180,10 +181,19 @@ def ingest_v2():
             sample_id=sample.id, element_id=element.id, microstrain=micro,
         ))
 
+    # Evaluate: drive the alert lifecycle and write a reconciled health score.
+    db.session.flush()
+    result = evaluate_sample(sample)
+
     device.last_seen = datetime.utcnow()
     db.session.commit()
 
-    response = {'status': 'ok', 'sample_id': sample.id, 'device_id': device.id}
+    response = {
+        'status': 'ok',
+        'sample_id': sample.id,
+        'device_id': device.id,
+        'health': result['health'],
+    }
     if unresolved:
         response['unresolved_strains'] = unresolved  # element_id/name not found on device
     return jsonify(response), 201
