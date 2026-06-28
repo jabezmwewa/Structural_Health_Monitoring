@@ -7,6 +7,7 @@ for trend charts (with time-range filtering and downsampling), and alerts.
 
 from datetime import datetime, timedelta
 
+import requests as _req
 from flask import Blueprint, request, jsonify
 
 from app.models import (
@@ -210,6 +211,34 @@ def alerts():
 
     rows = query.order_by(Alert.last_seen.desc()).limit(limit).all()
     return jsonify([a.to_dict() for a in rows])
+
+
+@api_v2_bp.route('/weather', methods=['GET'])
+def weather():
+    """
+    Proxy Open-Meteo current conditions for the configured device location.
+    No API key required. Returns the raw Open-Meteo JSON so the dashboard
+    can render temperature, humidity, wind, precipitation and condition code.
+    """
+    params = {
+        'latitude': Config.DEVICE_LAT,
+        'longitude': Config.DEVICE_LON,
+        'current': (
+            'temperature_2m,relative_humidity_2m,apparent_temperature,'
+            'precipitation,wind_speed_10m,wind_direction_10m,weather_code'
+        ),
+        'timezone': 'auto',
+        'forecast_days': 1,
+    }
+    try:
+        resp = _req.get(
+            'https://api.open-meteo.com/v1/forecast',
+            params=params, timeout=8,
+        )
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 502
 
 
 @api_v2_bp.route('/analysis', methods=['GET'])

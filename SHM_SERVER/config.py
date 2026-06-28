@@ -22,6 +22,11 @@ class Config:
     # ── External APIs ──────────────────────────────────────────────────────
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 
+    # Device GPS coordinates — used to fetch contextual weather from Open-Meteo.
+    # Override with DEVICE_LAT / DEVICE_LON in your .env file.
+    DEVICE_LAT = float(os.getenv('DEVICE_LAT', '-1.2921'))   # default: Nairobi
+    DEVICE_LON = float(os.getenv('DEVICE_LON', '36.8219'))
+
     # ── Sensor Thresholds ──────────────────────────────────────────────────
     # Edit these to match your structure's safe operating ranges.
     THRESHOLDS = {

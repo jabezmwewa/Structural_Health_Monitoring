@@ -1,142 +1,581 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Structural Health Monitoring</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { background: #f8fafc; }
-        .pill { font-size: .7rem; font-weight: 600; padding: .15rem .55rem; border-radius: 9999px; letter-spacing: .02em; }
-        .st-ok       { color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; }
-        .st-warning  { color:#b45309; background:#fffbeb; border:1px solid #fde68a; }
-        .st-critical { color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; }
-        .st-low      { color:#475569; background:#f1f5f9; border:1px solid #e2e8f0; }
-        .dot { width:.6rem; height:.6rem; border-radius:9999px; display:inline-block; }
-        .d-ok{background:#10b981;} .d-warning{background:#f59e0b;} .d-critical{background:#ef4444;}
-        .accent-ok       { border-left:5px solid #10b981; }
-        .accent-warning  { border-left:5px solid #f59e0b; }
-        .accent-critical { border-left:5px solid #ef4444; }
-        .accent-low      { border-left:5px solid #94a3b8; }
-        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
-        .live { animation: pulse 1.8s ease-in-out infinite; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structural Health Monitoring</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ── Status pills ─────────────────────────────────── */
+    .pill { font-size:.68rem; font-weight:600; padding:.15rem .5rem;
+            border-radius:9999px; letter-spacing:.03em; white-space:nowrap; }
+    .st-ok       { color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; }
+    .st-warning  { color:#b45309; background:#fffbeb; border:1px solid #fde68a; }
+    .st-critical { color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; }
+    .st-low      { color:#475569; background:#f1f5f9; border:1px solid #e2e8f0; }
+
+    /* ── Status accent border ─────────────────────────── */
+    .accent-ok       { border-left:4px solid #10b981 !important; }
+    .accent-warning  { border-left:4px solid #f59e0b !important; }
+    .accent-critical { border-left:4px solid #ef4444 !important; }
+    .accent-low      { border-left:4px solid #94a3b8 !important; }
+
+    /* ── Status dot ───────────────────────────────────── */
+    .dot { width:.55rem; height:.55rem; border-radius:9999px;
+           display:inline-block; flex-shrink:0; }
+    .d-ok       { background:#10b981; }
+    .d-warning  { background:#f59e0b; }
+    .d-critical { background:#ef4444; }
+
+    /* ── Live pulse ───────────────────────────────────── */
+    @keyframes pulse-live { 0%,100%{opacity:1;} 50%{opacity:.25;} }
+    .live { animation: pulse-live 1.8s ease-in-out infinite; }
+
+    /* ── Skeleton shimmer ─────────────────────────────── */
+    @keyframes shimmer {
+      0%   { background-position:-600px 0; }
+      100% { background-position: 600px 0; }
+    }
+    .skeleton {
+      border-radius:8px;
+      background:linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
+      background-size:1200px 100%;
+      animation:shimmer 1.4s infinite linear;
+    }
+    html.dark .skeleton {
+      background:linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%);
+      background-size:1200px 100%;
+    }
+
+    /* ── Sidebar slide ────────────────────────────────── */
+    #sidebar { transition:transform .22s cubic-bezier(.4,0,.2,1); }
+  </style>
 </head>
-<body class="text-slate-800">
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
 
-    <!-- Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="bg-slate-900 text-white w-9 h-9 rounded-lg flex items-center justify-center font-bold">SHM</div>
-                <div>
-                    <h1 class="text-lg font-bold leading-tight">Structural Health Monitoring</h1>
-                    <p class="text-xs text-slate-500" id="device-name">—</p>
-                </div>
-            </div>
-            <div class="text-right text-xs text-slate-500">
-                <div class="flex items-center justify-end gap-1.5">
-                    <span class="dot d-ok live" id="live-dot"></span>
-                    <span id="conn-status">Live</span>
-                </div>
-                <div>Updated <span id="last-update">—</span></div>
-            </div>
+<!-- Mobile sidebar backdrop -->
+<div id="sidebar-backdrop"
+     class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden"
+     onclick="closeSidebar()"></div>
+
+<!-- ════════════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════════════ -->
+<aside id="sidebar"
+       class="fixed top-0 left-0 h-full w-60 bg-white dark:bg-slate-900
+              border-r border-slate-200 dark:border-slate-800
+              z-30 -translate-x-full lg:translate-x-0 flex flex-col">
+
+  <!-- Brand / Logo -->
+  <div class="flex items-center gap-3 px-4 py-4
+              border-b border-slate-200 dark:border-slate-800 shrink-0">
+    <!-- Portal-frame logo with gradient badge -->
+    <div class="w-9 h-9 rounded-xl shrink-0 flex items-center justify-center
+                bg-gradient-to-br from-blue-600 to-slate-900">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <!-- Top beam -->
+        <rect x="2" y="2.5" width="20" height="3" rx="1" fill="white"/>
+        <!-- Left column -->
+        <rect x="2" y="5.5" width="3" height="16.5" rx="1" fill="white"/>
+        <!-- Right column -->
+        <rect x="19" y="5.5" width="3" height="16.5" rx="1" fill="white"/>
+        <!-- ECG pulse (structural health signal) -->
+        <path d="M6 14 L8.5 14 L10 10 L12 18 L14 10 L15.5 14 L18 14"
+              stroke="white" stroke-width="1.75"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="min-w-0">
+      <p class="font-bold text-sm leading-tight">SHM Platform</p>
+      <p class="text-[11px] text-slate-400 truncate" id="sidebar-device">—</p>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-0.5 text-sm">
+    <a href="#overview-section"
+       class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
+              text-slate-600 dark:text-slate-300
+              hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+           viewBox="0 0 24 24" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+      </svg>
+      Overview
+    </a>
+    <a href="#elements-section"
+       class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
+              text-slate-600 dark:text-slate-300
+              hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+           viewBox="0 0 24 24" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+      </svg>
+      Structural Elements
+    </a>
+    <a href="#env-section"
+       class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
+              text-slate-600 dark:text-slate-300
+              hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+           viewBox="0 0 24 24" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+      </svg>
+      Environment
+    </a>
+    <a href="#analysis-section"
+       class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
+              text-slate-600 dark:text-slate-300
+              hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+           viewBox="0 0 24 24" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      </svg>
+      AI Analysis
+    </a>
+    <a href="#trends-section"
+       class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
+              text-slate-600 dark:text-slate-300
+              hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+           viewBox="0 0 24 24" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+      Trends
+    </a>
+    <a href="#alerts-section"
+       class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
+              text-slate-600 dark:text-slate-300
+              hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
+           viewBox="0 0 24 24" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+      Alerts
+      <span id="nav-alert-badge"
+            class="ml-auto bg-red-500 text-white text-[10px] font-bold
+                   px-1.5 py-0.5 rounded-full hidden">0</span>
+    </a>
+  </nav>
+
+  <!-- Sidebar footer -->
+  <div class="px-4 py-3 border-t border-slate-200 dark:border-slate-800 shrink-0">
+    <div class="flex items-center gap-2 text-xs">
+      <span class="dot d-ok live" id="sidebar-live-dot"></span>
+      <span class="text-slate-500 dark:text-slate-400" id="sidebar-conn">Connecting…</span>
+    </div>
+    <p class="text-[10px] text-slate-400 mt-0.5">
+      Updated <span id="sidebar-last-update">—</span>
+    </p>
+  </div>
+</aside>
+
+<!-- ════════════════════════════════════════════════════
+     MAIN WRAPPER
+════════════════════════════════════════════════════ -->
+<div class="lg:ml-60 flex flex-col min-h-full">
+
+  <!-- ── Topbar ── -->
+  <header class="sticky top-0 z-10 bg-white/80 dark:bg-slate-900/80
+                 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <div class="px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+
+      <div class="flex items-center gap-3">
+        <!-- Hamburger (mobile) -->
+        <button onclick="toggleSidebar()"
+                class="lg:hidden p-2 -ml-1 rounded-xl
+                       hover:bg-slate-100 dark:hover:bg-slate-800
+                       text-slate-500 dark:text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor"
+               viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <!-- Logo + title -->
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center
+                      bg-gradient-to-br from-blue-600 to-slate-900">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="2.5" width="20" height="3" rx="1" fill="white"/>
+              <rect x="2" y="5.5" width="3" height="16.5" rx="1" fill="white"/>
+              <rect x="19" y="5.5" width="3" height="16.5" rx="1" fill="white"/>
+              <path d="M6 14 L8.5 14 L10 10 L12 18 L14 10 L15.5 14 L18 14"
+                    stroke="white" stroke-width="1.75"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-sm font-bold leading-tight">Structural Health Monitoring</h1>
+            <p class="text-[11px] text-slate-400" id="device-name">—</p>
+          </div>
         </div>
-    </header>
+      </div>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+      <div class="flex items-center gap-2">
+        <div class="hidden sm:flex items-center gap-1.5 text-xs
+                    text-slate-500 dark:text-slate-400 mr-1">
+          <span class="dot d-ok live" id="live-dot"></span>
+          <span id="conn-status">Live</span>
+        </div>
+        <button onclick="toggleDark()" title="Toggle dark mode"
+                class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800
+                       text-slate-500 dark:text-slate-400">
+          <svg id="icon-moon" class="w-5 h-5" fill="none" stroke="currentColor"
+               viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+          </svg>
+          <svg id="icon-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
+               viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
 
-        <!-- Overall health banner -->
-        <section id="health-card" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 flex items-center gap-6 accent-ok">
-            <div class="relative w-28 h-28 flex-shrink-0">
-                <svg viewBox="0 0 120 120" class="w-28 h-28 -rotate-90">
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" stroke-width="12"/>
-                    <circle id="health-ring" cx="60" cy="60" r="52" fill="none" stroke="#10b981" stroke-width="12"
-                            stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327"/>
+  <!-- ── Page content ── -->
+  <main class="flex-1 p-3 sm:p-5 max-w-7xl mx-auto w-full space-y-3">
+
+    <!-- ══ BENTO ZONE 1: Overview ══════════════════════ -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-3" id="overview-section">
+
+      <!-- Hero: Health Gauge (dark card, always) -->
+      <div id="health-card"
+           class="lg:col-span-2 lg:h-72 bg-slate-900 dark:bg-slate-800
+                  rounded-3xl p-6 flex flex-col accent-ok
+                  border border-slate-800 dark:border-slate-700">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          Structure Health
+        </p>
+        <div id="health-gauge" class="flex-1 min-h-0 min-w-0"></div>
+        <div class="text-center pb-1">
+          <p class="text-xl font-bold text-slate-100" id="health-label">—</p>
+          <p class="text-xs text-slate-500 mt-0.5" id="health-sub">Waiting for data…</p>
+        </div>
+      </div>
+
+      <!-- Right: stats + weather -->
+      <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 lg:h-72">
+
+        <!-- Stats column (alerts + last reading) -->
+        <div class="flex flex-col gap-3 lg:h-full">
+          <!-- Active alerts -->
+          <div class="flex-1 bg-white dark:bg-slate-800 rounded-3xl p-5
+                      border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Active Alerts
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <div class="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/50
+                          flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor"
+                     viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                 </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span class="text-3xl font-bold" id="health-score">—</span>
-                    <span class="text-[10px] uppercase tracking-wide text-slate-400">/ 100</span>
+              </div>
+              <div>
+                <p class="text-4xl font-bold leading-none" id="active-alerts-count">—</p>
+                <p class="text-xs text-slate-400 mt-1">alerts</p>
+              </div>
+            </div>
+          </div>
+          <!-- Last reading -->
+          <div class="flex-1 bg-white dark:bg-slate-800 rounded-3xl p-5
+                      border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+              Last Reading
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/50
+                          flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor"
+                     viewBox="0 0 24 24" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-bold" id="last-update">—</p>
+                <p class="text-xs text-slate-400 mt-0.5">sensor timestamp</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weather card -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-5 lg:h-full
+                    border border-slate-200 dark:border-slate-700 flex flex-col">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            External Weather
+          </p>
+          <!-- Skeleton -->
+          <div id="weather-skeleton" class="flex-1 space-y-3">
+            <div class="skeleton h-10 w-24"></div>
+            <div class="skeleton h-3.5 w-36"></div>
+            <div class="skeleton h-3.5 w-28 mt-1"></div>
+            <div class="grid grid-cols-3 gap-2 mt-3">
+              <div class="skeleton h-12 rounded-2xl"></div>
+              <div class="skeleton h-12 rounded-2xl"></div>
+              <div class="skeleton h-12 rounded-2xl"></div>
+            </div>
+          </div>
+          <!-- Content -->
+          <div id="weather-content" class="hidden flex-1 flex flex-col justify-between">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-3xl font-bold" id="wx-temp">—</span>
+                  <span class="text-sm text-slate-400">°C</span>
                 </div>
+                <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mt-0.5"
+                   id="wx-desc">—</p>
+                <p class="text-xs text-slate-400" id="wx-feels">—</p>
+              </div>
+              <span class="text-4xl leading-none" id="wx-icon">🌤️</span>
             </div>
-            <div class="flex-1">
-                <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">Structure Status</p>
-                <p class="text-3xl font-bold" id="health-label">—</p>
-                <p class="text-sm text-slate-500 mt-1" id="health-sub">Waiting for data…</p>
+            <div class="grid grid-cols-3 gap-2 mt-4">
+              <div class="text-center bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-2">
+                <p class="text-[10px] text-slate-400 mb-0.5">Humidity</p>
+                <p class="font-semibold text-xs" id="wx-humidity">—</p>
+              </div>
+              <div class="text-center bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-2">
+                <p class="text-[10px] text-slate-400 mb-0.5">Wind</p>
+                <p class="font-semibold text-xs" id="wx-wind">—</p>
+              </div>
+              <div class="text-center bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-2">
+                <p class="text-[10px] text-slate-400 mb-0.5">Rain</p>
+                <p class="font-semibold text-xs" id="wx-precip">—</p>
+              </div>
             </div>
-            <div class="text-center px-5 py-3 rounded-lg bg-slate-50 border border-slate-200">
-                <p class="text-3xl font-bold" id="active-alerts-count">0</p>
-                <p class="text-xs text-slate-500 mt-1">Active alerts</p>
-            </div>
-        </section>
+          </div>
+          <p id="weather-error" class="hidden text-xs text-slate-400 italic mt-2">
+            Weather unavailable
+          </p>
+        </div>
 
-        <!-- Structural elements -->
-        <section>
-            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Structural Elements</h2>
-            <div id="elements-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-        </section>
+      </div><!-- /right -->
+    </div><!-- /zone 1 -->
 
-        <!-- Environment -->
-        <section>
-            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Environment &amp; Dynamics</h2>
-            <div id="env-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></div>
-        </section>
+    <!-- ══ BENTO ZONE 2: Environment sensors ═══════════ -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="env-section">
 
-        <!-- AI Analysis: ranked likely causes -->
-        <section>
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide">AI Analysis · Likely Causes</h2>
-                <span class="text-xs text-slate-400">ranked from trends &amp; patterns</span>
-            </div>
-            <div id="analysis-list" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-        </section>
+      <!-- Temperature -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700 accent-ok"
+           id="env-card-temperature">
+        <div class="flex items-center justify-between gap-1 mb-3">
+          <div class="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/60
+                      flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor"
+                 viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+            </svg>
+          </div>
+          <span class="pill st-ok" id="env-status-temperature">OK</span>
+        </div>
+        <p class="text-2xl font-bold" id="env-value-temperature">—</p>
+        <p class="text-xs text-slate-400 mt-0.5">Temperature · °C</p>
+      </div>
 
-        <!-- Trends -->
-        <section>
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Trends</h2>
-                <div class="flex gap-1" id="range-buttons">
-                    <button class="range-btn px-3 py-1 text-xs rounded-md border border-slate-200 bg-white" data-hours="1">1h</button>
-                    <button class="range-btn px-3 py-1 text-xs rounded-md border border-slate-200 bg-white" data-hours="6">6h</button>
-                    <button class="range-btn px-3 py-1 text-xs rounded-md border border-slate-900 bg-slate-900 text-white" data-hours="24">24h</button>
-                    <button class="range-btn px-3 py-1 text-xs rounded-md border border-slate-200 bg-white" data-hours="168">7d</button>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                    <h3 class="text-sm font-semibold mb-3">Strain by element <span class="text-xs font-normal text-slate-400">(μm/m)</span></h3>
-                    <div style="position:relative;height:280px;"><canvas id="strainChart"></canvas></div>
-                </div>
-                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-                    <h3 class="text-sm font-semibold mb-3">Temperature &amp; Humidity</h3>
-                    <div style="position:relative;height:280px;"><canvas id="envChart"></canvas></div>
-                </div>
-            </div>
-        </section>
+      <!-- Humidity -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700 accent-ok"
+           id="env-card-humidity">
+        <div class="flex items-center justify-between gap-1 mb-3">
+          <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/60
+                      flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor"
+                 viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+            </svg>
+          </div>
+          <span class="pill st-ok" id="env-status-humidity">OK</span>
+        </div>
+        <p class="text-2xl font-bold" id="env-value-humidity">—</p>
+        <p class="text-xs text-slate-400 mt-0.5">Humidity · %</p>
+      </div>
 
-        <!-- Alerts -->
-        <section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wide">Alerts &amp; Events</h2>
-                <div class="flex gap-1">
-                    <button id="alerts-active-btn" class="px-3 py-1 text-xs rounded-md border border-slate-900 bg-slate-900 text-white">Active</button>
-                    <button id="alerts-all-btn" class="px-3 py-1 text-xs rounded-md border border-slate-200 bg-white">History</button>
-                </div>
-            </div>
-            <div id="alerts-list" class="space-y-2"></div>
-        </section>
-    </main>
+      <!-- Vibration -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700 accent-ok"
+           id="env-card-vibration">
+        <div class="flex items-center justify-between gap-1 mb-3">
+          <div class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60
+                      flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor"
+                 viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <span class="pill st-ok" id="env-status-vibration">OK</span>
+        </div>
+        <p class="text-2xl font-bold" id="env-value-vibration">—</p>
+        <p class="text-xs text-slate-400 mt-0.5">Vibration · mm/s</p>
+      </div>
 
-    <footer class="max-w-7xl mx-auto px-6 py-6 text-center text-xs text-slate-400">
-        Structural Health Monitoring System
-    </footer>
+      <!-- Sound -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700 accent-ok"
+           id="env-card-sound">
+        <div class="flex items-center justify-between gap-1 mb-3">
+          <div class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60
+                      flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor"
+                 viewBox="0 0 24 24" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M9 9a3 3 0 000 6M6 12h.01"/>
+            </svg>
+          </div>
+          <span class="pill st-ok" id="env-status-sound">OK</span>
+        </div>
+        <p class="text-2xl font-bold" id="env-value-sound">—</p>
+        <p class="text-xs text-slate-400 mt-0.5">Sound · dB</p>
+      </div>
 
-    <script>
-        window.__DEVICE__     = {{ device|tojson }};
-        window.__ELEMENTS__   = {{ elements|tojson }};
-        window.__THRESHOLDS__ = {{ thresholds|tojson }};
-    </script>
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    </div><!-- /zone 2 -->
+
+    <!-- ══ BENTO ZONE 3: Structural elements + Strain dist ══ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3" id="elements-section">
+
+      <!-- Elements bento cell -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4">
+          Structural Elements
+        </p>
+        <div id="elements-grid"
+             class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- Strain distribution bento cell -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          Strain Distribution
+        </p>
+        <p class="text-xs text-slate-400 mt-0.5 mb-3">
+          Current snapshot — coloured by threshold status
+        </p>
+        <div id="strain-dist-chart" style="height:200px;"></div>
+      </div>
+
+    </div><!-- /zone 3 -->
+
+    <!-- ══ BENTO ZONE 4: AI Analysis ═══════════════════ -->
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                border border-slate-200 dark:border-slate-700"
+         id="analysis-section">
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          AI Analysis · Likely Causes
+        </p>
+        <span class="text-xs text-slate-400">ranked from trends &amp; patterns</span>
+      </div>
+      <div id="analysis-list" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
+    </div>
+
+    <!-- ══ BENTO ZONE 5: Trend charts ══════════════════ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3" id="trends-section">
+
+      <!-- Strain trend -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            Strain by Element
+            <span class="normal-case font-normal ml-1">(μm/m)</span>
+          </p>
+          <div class="flex gap-1" id="range-buttons">
+            <button class="range-btn px-2.5 py-1 text-xs rounded-lg
+                           border border-slate-200 dark:border-slate-600
+                           bg-white dark:bg-slate-700 dark:text-slate-300"
+                    data-hours="1">1h</button>
+            <button class="range-btn px-2.5 py-1 text-xs rounded-lg
+                           border border-slate-200 dark:border-slate-600
+                           bg-white dark:bg-slate-700 dark:text-slate-300"
+                    data-hours="6">6h</button>
+            <button class="range-btn range-active px-2.5 py-1 text-xs rounded-lg
+                           border border-slate-900 bg-slate-900 text-white"
+                    data-hours="24">24h</button>
+            <button class="range-btn px-2.5 py-1 text-xs rounded-lg
+                           border border-slate-200 dark:border-slate-600
+                           bg-white dark:bg-slate-700 dark:text-slate-300"
+                    data-hours="168">7d</button>
+          </div>
+        </div>
+        <div style="position:relative;height:240px;">
+          <canvas id="strainChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Env trend -->
+      <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                  border border-slate-200 dark:border-slate-700">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4">
+          Temperature &amp; Humidity
+        </p>
+        <div style="position:relative;height:240px;">
+          <canvas id="envChart"></canvas>
+        </div>
+      </div>
+
+    </div><!-- /zone 5 -->
+
+    <!-- ══ BENTO ZONE 6: Alerts ═════════════════════════ -->
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                border border-slate-200 dark:border-slate-700"
+         id="alerts-section">
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          Alerts &amp; Events
+        </p>
+        <div class="flex gap-1">
+          <button id="alerts-active-btn"
+                  class="px-3 py-1 text-xs rounded-lg border border-slate-900 bg-slate-900 text-white">
+            Active
+          </button>
+          <button id="alerts-all-btn"
+                  class="px-3 py-1 text-xs rounded-lg border
+                         border-slate-200 dark:border-slate-600
+                         bg-white dark:bg-slate-800 dark:text-slate-300">
+            History
+          </button>
+        </div>
+      </div>
+      <div id="alerts-list" class="space-y-2"></div>
+    </div>
+
+  </main>
+
+  <footer class="py-5 text-center text-xs text-slate-400 dark:text-slate-600
+                 border-t border-slate-200 dark:border-slate-800 mt-2">
+    Structural Health Monitoring System
+  </footer>
+</div>
+
+<script>
+  window.__DEVICE__     = {{ device|tojson }};
+  window.__ELEMENTS__   = {{ elements|tojson }};
+  window.__THRESHOLDS__ = {{ thresholds|tojson }};
+</script>
+<script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>
