@@ -3,3 +3,9 @@ Flask-SQLAlchemy==3.1.1
 Flask-Migrate==4.0.7
 requests==2.32.3
 python-dotenv==1.0.1
+
+# ML pipeline (SHM_ML/pipeline.py)
+pandas>=2.0
+numpy>=1.26
+scikit-learn>=1.4
+scipy>=1.12
