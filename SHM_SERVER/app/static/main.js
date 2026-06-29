@@ -6,6 +6,50 @@
 // Chart.js: strain trend + env trend time-series.
 // ============================================================
 
+// ══ HUD ICON LIBRARY ═══════════════════════════════════════════
+// Inline Tabler stroke icons (tabler.io) — no CDN runtime needed.
+// To retune size/color/glow edit --hud-cyan/--hud-glow in dashboard.html <style>.
+// To add an icon: paste the inner SVG content as a new key below,
+// then reference it in hudIcon('key-name').
+const ICONS = {
+  // ── Navigation ───────────────────────────────────────────────
+  scan:          `<path d="M4 7v-1a2 2 0 0 1 2 -2h2"/><path d="M4 17v1a2 2 0 0 1 2 2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v1"/><path d="M16 20h2a2 2 0 0 1 2 -2v-1"/><path d="M5 12l14 0"/>`,
+  building:      `<path d="M3 21l18 0"/><path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16"/><path d="M9 7h1m0 4h1m4 -4h1m0 4h1m-5 10v-5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v5m-4 0h4"/>`,
+  thermometer:   `<path d="M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5"/><path d="M10 9l4 0"/>`,
+  cpu:           `<rect x="5" y="5" width="14" height="14" rx="1"/><rect x="9" y="9" width="6" height="6"/><path d="M3 10h2"/><path d="M3 14h2"/><path d="M10 3v2"/><path d="M14 3v2"/><path d="M21 10h-2"/><path d="M21 14h-2"/><path d="M10 21v-2"/><path d="M14 21v-2"/>`,
+  radar:         `<circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="8"/><path d="M12 12l5 -3"/>`,
+  activity:      `<path d="M3 12h4l3 8l4 -16l3 8h4"/>`,
+  bell:          `<path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/>`,
+  // ── Sensors ──────────────────────────────────────────────────
+  droplet:       `<path d="M12 3l5.25 8.25a7.5 7.5 0 1 1 -10.5 0l5.25 -8.25"/>`,
+  bolt:          `<path d="M13 3l0 7h6l-8 11l0 -7h-6l8 -11"/>`,
+  antennaBars:   `<path d="M6 18v-1"/><path d="M10 18v-3"/><path d="M14 18v-6"/><path d="M18 18v-9"/>`,
+  // ── Status / defects ─────────────────────────────────────────
+  crosshair:     `<circle cx="12" cy="12" r="1"/><circle cx="12" cy="12" r="9"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="M12 3v3"/><path d="M12 18v3"/>`,
+  gauge:         `<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1"/><path d="M12 3v2"/><path d="M3 12h2"/><path d="M20 12h2"/><path d="M10.1 10.1l1.9 1.9"/>`,
+  alertTriangle: `<path d="M12 9v4"/><path d="M12 16v.01"/><path d="M5.07 19h13.86a2 2 0 0 0 1.75 -2.75l-6.93 -12a2 2 0 0 0 -3.5 0l-6.93 12a2 2 0 0 0 1.75 2.75"/>`,
+  alertCircle:   `<circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16v.01"/>`,
+  check:         `<path d="M5 12l5 5l10 -10"/>`,
+  refresh:       `<path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>`,
+  waveSine:      `<path d="M3 12c1.5 -2 3 -3 4.5 -2c1.5 1 3 5 4.5 5c1.5 0 3 -4 4.5 -5c1.5 -1 3 0 4.5 2"/>`,
+};
+
+/**
+ * Returns an inline SVG string for the given icon name.
+ * @param {string}  name       — key from ICONS
+ * @param {number}  [size=20]  — px width/height
+ * @param {string}  [extra]    — additional CSS classes
+ * @returns {string} SVG markup
+ */
+function hudIcon(name, size = 20, extra = '') {
+  const inner = ICONS[name] ?? ICONS.crosshair;
+  return `<svg xmlns="http://www.w3.org/2000/svg"
+               width="${size}" height="${size}" viewBox="0 0 24 24"
+               class="hud-icon ${extra}" aria-hidden="true"
+               style="min-width:${size}px">${inner}</svg>`;
+}
+// ══ END HUD ICON LIBRARY ════════════════════════════════════════
+
 const POLL_MS      = 5000;
 const WEATHER_MS   = 600_000;   // 10 min
 const ELEMENTS     = window.__ELEMENTS__   || [];
@@ -94,8 +138,8 @@ function closeSidebar() {
 
 // ── ECharts: health gauge ─────────────────────────────────────
 function gaugeOption(score, label) {
-  const grey  = '#94a3b8';
-  const dark  = isDark();
+  const dark      = isDark();
+  const labelClr  = dark ? '#94a3b8' : '#475569';   // slate-400 / slate-600
   return {
     backgroundColor: 'transparent',
     series: [{
@@ -119,8 +163,8 @@ function gaugeOption(score, label) {
       },
       axisTick:  { length: 8,  lineStyle: { color: 'auto', width: 2 } },
       splitLine: { length: 16, lineStyle: { color: 'auto', width: 4 } },
-      axisLabel: { color: grey, fontSize: 10, distance: -40 },
-      title:     { fontSize: 11, color: grey, offsetCenter: [0, '42%'] },
+      axisLabel: { color: labelClr, fontSize: 10, distance: -40 },
+      title:     { fontSize: 11, color: labelClr, offsetCenter: [0, '42%'] },
       detail: {
         valueAnimation: true,
         fontSize: 30,
@@ -237,11 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
   refreshLatest();
   refreshAlerts();
   refreshAnalysis();
+  refreshMLReport();
   refreshWeather();
   loadHistory(currentHours);
 
   setInterval(() => { refreshLatest(); refreshAlerts(); }, POLL_MS);
   setInterval(refreshAnalysis, 30_000);
+  setInterval(refreshMLReport, ML_POLL_MS);
   setInterval(refreshWeather,  WEATHER_MS);
 
   window.addEventListener('resize', () => {
@@ -263,9 +309,12 @@ function buildElementCards() {
                 border border-slate-200 dark:border-slate-600
                 p-4 accent-ok" id="el-card-${e.id}">
       <div class="flex items-start justify-between">
-        <div>
-          <p class="font-semibold text-sm">${e.name}</p>
-          <p class="text-[11px] text-slate-400 capitalize mt-0.5">${e.element_type}</p>
+        <div class="flex items-center gap-2">
+          ${hudIcon('crosshair', 16)}
+          <div>
+            <p class="font-semibold text-sm">${e.name}</p>
+            <p class="text-[11px] text-slate-400 capitalize mt-0.5">${e.element_type}</p>
+          </div>
         </div>
         <span class="pill st-ok" id="el-status-${e.id}">OK</span>
       </div>
@@ -373,18 +422,26 @@ async function refreshAlerts() {
 }
 
 function alertRow(a) {
-  const when     = new Date(a.last_seen || a.timestamp).toLocaleString();
-  const scope    = a.element ?? 'Device';
+  const when    = new Date(a.last_seen || a.timestamp).toLocaleString();
+  const scope   = a.element ?? 'Device';
+  const sevIcon = a.severity === 'critical' ? hudIcon('alertTriangle', 16)
+                : a.severity === 'warning'  ? hudIcon('alertCircle',   16)
+                :                             hudIcon('bell',           16);
   const resolved = a.resolved
-    ? `<span class="text-xs text-slate-400">resolved</span>`
-    : `<button class="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-               onclick="resolveAlert(${a.id})">Resolve ✕</button>`;
+    ? `<span class="flex items-center gap-1 text-xs text-slate-400">${hudIcon('check', 14)} resolved</span>`
+    : `<button class="flex items-center gap-1 text-xs text-slate-400
+                      hover:text-slate-700 dark:hover:text-slate-200"
+               onclick="resolveAlert(${a.id})"
+               aria-label="Resolve alert ${a.id}">
+         ${hudIcon('check', 14)} Resolve
+       </button>`;
   return `
     <div class="flex items-center justify-between gap-3
                 border border-slate-200 dark:border-slate-700
                 rounded-2xl p-3 accent-${a.severity}">
       <div class="flex items-center gap-3 min-w-0">
-        <span class="pill st-${a.severity}">${a.severity.toUpperCase()}</span>
+        ${sevIcon}
+        <span class="pill st-${a.severity} shrink-0">${a.severity.toUpperCase()}</span>
         <div class="min-w-0">
           <p class="text-sm font-medium truncate">${scope} · ${a.message}</p>
           <p class="text-xs text-slate-400">${when}</p>
@@ -425,6 +482,18 @@ async function refreshAnalysis() {
   }
 }
 
+function _causeIcon(cause) {
+  const c = (cause || '').toLowerCase();
+  if (c.includes('crack'))    return 'scan';
+  if (c.includes('deflect'))  return 'activity';
+  if (c.includes('settle'))   return 'crosshair';
+  if (c.includes('corros'))   return 'droplet';
+  if (c.includes('vibrat'))   return 'bolt';
+  if (c.includes('creep'))    return 'gauge';
+  if (c.includes('fatigue'))  return 'waveSine';
+  return 'radar';
+}
+
 function causeCard(f) {
   const sev  = f.likelihood === 'High' ? 'critical' : f.likelihood === 'Moderate' ? 'warning' : 'low';
   const evid = f.evidence.map(e => `<li>${e}</li>`).join('');
@@ -433,12 +502,123 @@ function causeCard(f) {
                 border border-slate-200 dark:border-slate-600
                 p-4 accent-${sev}">
       <div class="flex items-center justify-between gap-2">
-        <p class="font-semibold">${f.cause}</p>
-        <span class="pill st-${sev}">${f.likelihood} · ${Math.round(f.score * 100)}%</span>
+        <div class="flex items-center gap-2">
+          ${hudIcon(_causeIcon(f.cause), 16)}
+          <p class="font-semibold">${f.cause}</p>
+        </div>
+        <span class="pill st-${sev} shrink-0">${f.likelihood} · ${Math.round(f.score * 100)}%</span>
       </div>
       <ul class="text-sm text-slate-600 dark:text-slate-300 mt-2 space-y-1 list-disc ml-5">${evid}</ul>
       <p class="text-xs text-slate-400 mt-2">Affected: ${(f.affected || []).join(', ')}</p>
       <p class="text-sm text-slate-700 dark:text-slate-300 mt-2">→ ${f.recommendation}</p>
+    </div>`;
+}
+
+// ── ML Anomaly Analysis ───────────────────────────────────────
+const ML_POLL_MS = 60_000;   // re-fetch every 60 s (server caches 5 min)
+
+async function refreshMLReport() {
+  const spinner = document.getElementById('ml-spinner');
+  if (spinner) spinner.classList.remove('hidden');
+  try {
+    const d = await fetchJSON('/api/v2/ml-report');
+    if (d.error) { renderMLError(d.error); return; }
+    renderMLReport(d);
+  } catch (err) {
+    renderMLError(err.message);
+    console.error('ml-report failed:', err);
+  } finally {
+    if (spinner) spinner.classList.add('hidden');
+  }
+}
+
+function renderMLReport(d) {
+  // ── Timestamp ───────────────────────────────────────────────
+  const ts  = document.getElementById('ml-timestamp');
+  const gen = d.generated_at ? new Date(d.generated_at).toLocaleTimeString() : '—';
+  const age = d.cache_age_s != null ? ` · cached ${d.cache_age_s}s ago` : '';
+  if (ts) ts.textContent = `Last computed ${gen}${age}`;
+
+  // ── Anomaly rate badges ─────────────────────────────────────
+  const ratesEl = document.getElementById('ml-anom-rates');
+  if (ratesEl && d.elements) {
+    ratesEl.innerHTML = d.elements.map(el => {
+      const pct      = Math.round(el.anomaly_rate * 100);
+      const trendIcon = el.slope_per_hr > 1  ? hudIcon('activity', 13)
+                      : el.slope_per_hr < -1 ? hudIcon('waveSine', 13)
+                      :                        '';
+      const cls  = pct >= 50 ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300'
+                 : pct >= 15 ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300'
+                 :             'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300';
+      return `<span class="inline-flex items-center gap-1 text-xs font-semibold
+                           px-2.5 py-1 rounded-full ${cls}">
+        ${hudIcon('crosshair', 12)} ${el.name} · ${pct}%${trendIcon}
+      </span>`;
+    }).join('');
+  }
+
+  // ── Defect ranking cards ────────────────────────────────────
+  const list = document.getElementById('ml-defect-list');
+  if (!list) return;
+  const ranked = d.ranked_defects || [];
+  if (!ranked.length) {
+    list.innerHTML = `
+      <div class="col-span-full text-sm text-emerald-700 dark:text-emerald-300
+                  bg-emerald-50 dark:bg-emerald-950
+                  border border-emerald-200 dark:border-emerald-800
+                  rounded-lg p-3 flex items-center gap-2">
+        <span class="dot d-ok"></span> No defects above threshold — structure appears healthy.
+      </div>`;
+    return;
+  }
+  list.innerHTML = ranked.map(mlDefectCard).join('');
+}
+
+function _defectIcon(defect) {
+  const d = (defect || '').toLowerCase();
+  if (d.includes('deflect'))  return 'activity';
+  if (d.includes('crack'))    return 'scan';
+  if (d.includes('settle'))   return 'crosshair';
+  if (d.includes('creep'))    return 'gauge';
+  if (d.includes('corros'))   return 'droplet';
+  if (d.includes('vibrat') || d.includes('fatigue')) return 'bolt';
+  return 'radar';
+}
+
+function mlDefectCard(d) {
+  const sev      = d.confidence === 'HIGH'     ? 'critical'
+                 : d.confidence === 'MODERATE' ? 'warning' : 'low';
+  const barColor = d.confidence === 'HIGH'     ? '#ef4444'
+                 : d.confidence === 'MODERATE' ? '#f59e0b' : '#64748b';
+  const pct      = Math.round(d.score * 100);
+  const evid     = (d.evidence || []).map(e => `<li>${e}</li>`).join('');
+  return `
+    <div class="bg-slate-50 dark:bg-slate-700/50 rounded-2xl
+                border border-slate-200 dark:border-slate-600
+                p-4 accent-${sev}">
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="flex items-center gap-2">
+          ${hudIcon(_defectIcon(d.defect), 16)}
+          <p class="font-semibold text-sm leading-snug">${d.defect}</p>
+        </div>
+        <span class="pill st-${sev} shrink-0">${d.confidence} · ${pct}%</span>
+      </div>
+      <div class="w-full bg-slate-200 dark:bg-slate-600 rounded-full h-1.5 mb-3">
+        <div class="h-1.5 rounded-full"
+             style="width:${pct}%;background:${barColor};transition:width .4s ease"></div>
+      </div>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">${d.description}</p>
+      <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-0.5 list-disc ml-4">
+        ${evid}
+      </ul>
+    </div>`;
+}
+
+function renderMLError(msg) {
+  const list = document.getElementById('ml-defect-list');
+  if (list) list.innerHTML = `
+    <div class="col-span-full text-xs text-slate-400 italic p-2">
+      ML analysis unavailable: ${msg}
     </div>`;
 }
 

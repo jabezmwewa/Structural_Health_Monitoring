@@ -250,3 +250,25 @@ def analysis():
     hours = request.args.get('hours', 72, type=int)
     trends = analyse_device(device, hours)
     return jsonify({'trends': trends, 'diagnosis': rank_causes(trends)})
+
+
+@api_v2_bp.route('/ml-report', methods=['GET'])
+def ml_report():
+    """
+    ML anomaly detection + defect ranking (Isolation Forest + OLS).
+    Results are cached for 5 minutes server-side; first call takes 1-3 s.
+    Query params:
+        hours   analysis window in hours (default 48)
+        refresh force-invalidate cache (any value)
+    """
+    import app.services.ml_service as _svc
+    hours = request.args.get('hours', 48, type=int)
+
+    if request.args.get('refresh') is not None:
+        with _svc._cache_lock:
+            _svc._cache_time = 0
+
+    result = _svc.get_ml_report(window_h=hours)
+    if 'error' in result and len(result) == 1:
+        return jsonify(result), 500
+    return jsonify(result)

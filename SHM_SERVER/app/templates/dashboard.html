@@ -11,6 +11,39 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
+    /* ══ HUD TOKENS — edit here to retune icon style ════════════════════
+       --hud-stroke : SVG stroke-width applied to every .hud-icon
+       Icon colour is inherited from the surrounding text colour so icons
+       automatically follow the light/dark theme without extra rules.
+       To add a glow back: set filter: drop-shadow(...) on .hud-icon.
+    ═══════════════════════════════════════════════════════════════════ */
+    :root {
+      --hud-stroke: 1.75;
+    }
+
+    /* All Tabler stroke icons — colour inherits from parent text */
+    .hud-icon {
+      stroke: currentColor;
+      stroke-width: var(--hud-stroke);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    /* Badge container behind sensor / stats icons */
+    .hud-badge {
+      background: rgba(0,0,0,.05);
+      border: 1px solid rgba(0,0,0,.09);
+      border-radius: 0.75rem;
+      color: #64748b; /* slate-500 — icon colour in light mode */
+    }
+    .dark .hud-badge {
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.10);
+      color: #94a3b8; /* slate-400 — icon colour in dark mode */
+    }
+
     /* ── Status pills ─────────────────────────────────── */
     .pill { font-size:.68rem; font-weight:600; padding:.15rem .5rem;
             border-radius:9999px; letter-spacing:.03em; white-space:nowrap; }
@@ -102,10 +135,13 @@
        class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
               text-slate-600 dark:text-slate-300
               hover:bg-slate-100 dark:hover:bg-slate-800">
-      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
-           viewBox="0 0 24 24" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+      <!-- tabler-scan -->
+      <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 7v-1a2 2 0 0 1 2 -2h2"/>
+        <path d="M4 17v1a2 2 0 0 1 2 2h2"/>
+        <path d="M16 4h2a2 2 0 0 1 2 2v1"/>
+        <path d="M16 20h2a2 2 0 0 1 2 -2v-1"/>
+        <path d="M5 12l14 0"/>
       </svg>
       Overview
     </a>
@@ -113,10 +149,11 @@
        class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
               text-slate-600 dark:text-slate-300
               hover:bg-slate-100 dark:hover:bg-slate-800">
-      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
-           viewBox="0 0 24 24" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+      <!-- tabler-building -->
+      <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 21l18 0"/>
+        <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16"/>
+        <path d="M9 7h1m0 4h1m4 -4h1m0 4h1m-5 10v-5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
       </svg>
       Structural Elements
     </a>
@@ -124,10 +161,10 @@
        class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
               text-slate-600 dark:text-slate-300
               hover:bg-slate-100 dark:hover:bg-slate-800">
-      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
-           viewBox="0 0 24 24" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+      <!-- tabler-thermometer -->
+      <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5"/>
+        <path d="M10 9l4 0"/>
       </svg>
       Environment
     </a>
@@ -135,21 +172,37 @@
        class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
               text-slate-600 dark:text-slate-300
               hover:bg-slate-100 dark:hover:bg-slate-800">
-      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
-           viewBox="0 0 24 24" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+      <!-- tabler-cpu -->
+      <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="5" y="5" width="14" height="14" rx="1"/>
+        <rect x="9" y="9" width="6" height="6"/>
+        <path d="M3 10h2"/><path d="M3 14h2"/>
+        <path d="M10 3v2"/><path d="M14 3v2"/>
+        <path d="M21 10h-2"/><path d="M21 14h-2"/>
+        <path d="M10 21v-2"/><path d="M14 21v-2"/>
       </svg>
       AI Analysis
+    </a>
+    <a href="#ml-section"
+       class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
+              text-slate-600 dark:text-slate-300
+              hover:bg-slate-100 dark:hover:bg-slate-800">
+      <!-- tabler-radar -->
+      <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="2"/>
+        <circle cx="12" cy="12" r="5"/>
+        <circle cx="12" cy="12" r="8"/>
+        <path d="M12 12l5 -3"/>
+      </svg>
+      ML Analysis
     </a>
     <a href="#trends-section"
        class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
               text-slate-600 dark:text-slate-300
               hover:bg-slate-100 dark:hover:bg-slate-800">
-      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
-           viewBox="0 0 24 24" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      <!-- tabler-activity -->
+      <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 12h4l3 8l4 -16l3 8h4"/>
       </svg>
       Trends
     </a>
@@ -157,10 +210,10 @@
        class="flex items-center gap-3 px-3 py-2 rounded-xl font-medium
               text-slate-600 dark:text-slate-300
               hover:bg-slate-100 dark:hover:bg-slate-800">
-      <svg class="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor"
-           viewBox="0 0 24 24" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      <!-- tabler-bell -->
+      <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/>
+        <path d="M9 17v1a3 3 0 0 0 6 0v-1"/>
       </svg>
       Alerts
       <span id="nav-alert-badge"
@@ -195,11 +248,11 @@
         <!-- Hamburger (mobile) -->
         <button onclick="toggleSidebar()"
                 class="lg:hidden p-2 -ml-1 rounded-xl
-                       hover:bg-slate-100 dark:hover:bg-slate-800
-                       text-slate-500 dark:text-slate-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor"
-               viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                       hover:bg-slate-100 dark:hover:bg-slate-800"
+                aria-label="Open navigation menu">
+          <!-- tabler-menu-2 -->
+          <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6l16 0"/><path d="M4 12l16 0"/><path d="M4 18l16 0"/>
           </svg>
         </button>
 
@@ -229,18 +282,18 @@
           <span class="dot d-ok live" id="live-dot"></span>
           <span id="conn-status">Live</span>
         </div>
-        <button onclick="toggleDark()" title="Toggle dark mode"
-                class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800
-                       text-slate-500 dark:text-slate-400">
-          <svg id="icon-moon" class="w-5 h-5" fill="none" stroke="currentColor"
-               viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        <button onclick="toggleDark()" aria-label="Toggle dark mode"
+                class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+          <!-- tabler-moon -->
+          <svg id="icon-moon" class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/>
           </svg>
-          <svg id="icon-sun" class="w-5 h-5 hidden" fill="none" stroke="currentColor"
-               viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+          <!-- tabler-sun -->
+          <svg id="icon-sun" class="hud-icon w-5 h-5 hidden" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M3 12h1"/><path d="M12 3v1"/><path d="M20 12h1"/><path d="M12 20v1"/>
+            <path d="M5.636 5.636l.707 .707"/><path d="M17.657 5.636l-.707 .707"/>
+            <path d="M5.636 18.364l.707 -.707"/><path d="M17.657 18.364l-.707 -.707"/>
           </svg>
         </button>
       </div>
@@ -253,18 +306,18 @@
     <!-- ══ BENTO ZONE 1: Overview ══════════════════════ -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-3" id="overview-section">
 
-      <!-- Hero: Health Gauge (dark card, always) -->
+      <!-- Hero: Health Gauge -->
       <div id="health-card"
-           class="lg:col-span-2 lg:h-72 bg-slate-900 dark:bg-slate-800
+           class="lg:col-span-2 lg:h-72 bg-white dark:bg-slate-800
                   rounded-3xl p-6 flex flex-col accent-ok
-                  border border-slate-800 dark:border-slate-700">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  border border-slate-200 dark:border-slate-700">
+        <p class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
           Structure Health
         </p>
         <div id="health-gauge" class="flex-1 min-h-0 min-w-0"></div>
         <div class="text-center pb-1">
-          <p class="text-xl font-bold text-slate-100" id="health-label">—</p>
-          <p class="text-xs text-slate-500 mt-0.5" id="health-sub">Waiting for data…</p>
+          <p class="text-xl font-bold text-slate-800 dark:text-slate-100" id="health-label">—</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="health-sub">Waiting for data…</p>
         </div>
       </div>
 
@@ -280,12 +333,11 @@
               Active Alerts
             </p>
             <div class="flex items-center gap-3 mt-2">
-              <div class="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/50
-                          flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor"
-                     viewBox="0 0 24 24" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              <div class="w-10 h-10 hud-badge flex items-center justify-center shrink-0">
+                <!-- tabler-bell -->
+                <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/>
+                  <path d="M9 17v1a3 3 0 0 0 6 0v-1"/>
                 </svg>
               </div>
               <div>
@@ -301,12 +353,11 @@
               Last Reading
             </p>
             <div class="flex items-center gap-3 mt-2">
-              <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/50
-                          flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor"
-                     viewBox="0 0 24 24" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <div class="w-10 h-10 hud-badge flex items-center justify-center shrink-0">
+                <!-- tabler-clock -->
+                <svg class="hud-icon w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M12 7v5l3 3"/>
                 </svg>
               </div>
               <div>
@@ -379,12 +430,11 @@
                   border border-slate-200 dark:border-slate-700 accent-ok"
            id="env-card-temperature">
         <div class="flex items-center justify-between gap-1 mb-3">
-          <div class="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/60
-                      flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor"
-                 viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+          <div class="w-8 h-8 hud-badge flex items-center justify-center shrink-0">
+            <!-- tabler-thermometer -->
+            <svg class="hud-icon w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5"/>
+              <path d="M10 9l4 0"/>
             </svg>
           </div>
           <span class="pill st-ok" id="env-status-temperature">OK</span>
@@ -398,12 +448,10 @@
                   border border-slate-200 dark:border-slate-700 accent-ok"
            id="env-card-humidity">
         <div class="flex items-center justify-between gap-1 mb-3">
-          <div class="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/60
-                      flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-teal-500" fill="none" stroke="currentColor"
-                 viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+          <div class="w-8 h-8 hud-badge flex items-center justify-center shrink-0">
+            <!-- tabler-droplet -->
+            <svg class="hud-icon w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3l5.25 8.25a7.5 7.5 0 1 1 -10.5 0l5.25 -8.25"/>
             </svg>
           </div>
           <span class="pill st-ok" id="env-status-humidity">OK</span>
@@ -417,12 +465,10 @@
                   border border-slate-200 dark:border-slate-700 accent-ok"
            id="env-card-vibration">
         <div class="flex items-center justify-between gap-1 mb-3">
-          <div class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60
-                      flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor"
-                 viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          <div class="w-8 h-8 hud-badge flex items-center justify-center shrink-0">
+            <!-- tabler-bolt -->
+            <svg class="hud-icon w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M13 3l0 7h6l-8 11l0 -7h-6l8 -11"/>
             </svg>
           </div>
           <span class="pill st-ok" id="env-status-vibration">OK</span>
@@ -436,12 +482,11 @@
                   border border-slate-200 dark:border-slate-700 accent-ok"
            id="env-card-sound">
         <div class="flex items-center justify-between gap-1 mb-3">
-          <div class="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60
-                      flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-violet-500" fill="none" stroke="currentColor"
-                 viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M15.536 8.464a5 5 0 010 7.072M12 6a7 7 0 010 12M9 9a3 3 0 000 6M6 12h.01"/>
+          <div class="w-8 h-8 hud-badge flex items-center justify-center shrink-0">
+            <!-- tabler-antenna-bars-5 -->
+            <svg class="hud-icon w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 18v-1"/><path d="M10 18v-3"/>
+              <path d="M14 18v-6"/><path d="M18 18v-9"/>
             </svg>
           </div>
           <span class="pill st-ok" id="env-status-sound">OK</span>
@@ -458,7 +503,13 @@
       <!-- Elements bento cell -->
       <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
                   border border-slate-200 dark:border-slate-700">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4
+                  flex items-center gap-1.5">
+          <svg class="hud-icon w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 21l18 0"/>
+            <path d="M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16"/>
+            <path d="M9 7h1m0 4h1m4 -4h1m0 4h1m-5 10v-5a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v5m-4 0h4"/>
+          </svg>
           Structural Elements
         </p>
         <div id="elements-grid"
@@ -468,7 +519,11 @@
       <!-- Strain distribution bento cell -->
       <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
                   border border-slate-200 dark:border-slate-700">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider
+                  flex items-center gap-1.5">
+          <svg class="hud-icon w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 12h4l3 8l4 -16l3 8h4"/>
+          </svg>
           Strain Distribution
         </p>
         <p class="text-xs text-slate-400 mt-0.5 mb-3">
@@ -484,13 +539,75 @@
                 border border-slate-200 dark:border-slate-700"
          id="analysis-section">
       <div class="flex items-center justify-between mb-4">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider
+                  flex items-center gap-1.5">
+          <svg class="hud-icon w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="5" y="5" width="14" height="14" rx="1"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <path d="M3 10h2"/><path d="M3 14h2"/>
+            <path d="M10 3v2"/><path d="M14 3v2"/>
+            <path d="M21 10h-2"/><path d="M21 14h-2"/>
+            <path d="M10 21v-2"/><path d="M14 21v-2"/>
+          </svg>
           AI Analysis · Likely Causes
         </p>
         <span class="text-xs text-slate-400">ranked from trends &amp; patterns</span>
       </div>
       <div id="analysis-list" class="grid grid-cols-1 lg:grid-cols-2 gap-3"></div>
     </div>
+
+    <!-- ══ BENTO ZONE 4b: ML Defect Ranking ════════════ -->
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
+                border border-slate-200 dark:border-slate-700"
+         id="ml-section">
+
+      <!-- Header -->
+      <div class="flex items-start justify-between mb-4 gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider
+                      flex items-center gap-1.5">
+              <svg class="hud-icon w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="12" cy="12" r="5"/>
+                <circle cx="12" cy="12" r="8"/>
+                <path d="M12 12l5 -3"/>
+              </svg>
+              ML Anomaly Analysis
+            </p>
+            <!-- Computing spinner -->
+            <svg id="ml-spinner"
+                 class="hidden w-3 h-3 text-blue-400 animate-spin"
+                 fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10"
+                      stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5" id="ml-timestamp">
+            Loading…
+          </p>
+        </div>
+        <span class="shrink-0 text-[10px] text-slate-500 dark:text-slate-400
+                     bg-slate-100 dark:bg-slate-700 rounded-full px-2.5 py-1
+                     font-medium whitespace-nowrap">
+          Isolation Forest · OLS
+        </span>
+      </div>
+
+      <!-- Per-element anomaly rate badges -->
+      <div id="ml-anom-rates" class="flex flex-wrap gap-2 mb-5"></div>
+
+      <!-- Defect ranking cards -->
+      <div id="ml-defect-list"
+           class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <!-- skeleton -->
+        <div class="skeleton h-24 rounded-2xl"></div>
+        <div class="skeleton h-24 rounded-2xl"></div>
+      </div>
+
+    </div><!-- /zone 4b -->
 
     <!-- ══ BENTO ZONE 5: Trend charts ══════════════════ -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-3" id="trends-section">
@@ -499,7 +616,11 @@
       <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
                   border border-slate-200 dark:border-slate-700">
         <div class="flex items-center justify-between mb-4">
-          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider
+                    flex items-center gap-1.5">
+            <svg class="hud-icon w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 12h4l3 8l4 -16l3 8h4"/>
+            </svg>
             Strain by Element
             <span class="normal-case font-normal ml-1">(μm/m)</span>
           </p>
@@ -529,7 +650,12 @@
       <!-- Env trend -->
       <div class="bg-white dark:bg-slate-800 rounded-3xl p-5
                   border border-slate-200 dark:border-slate-700">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-4
+                  flex items-center gap-1.5">
+          <svg class="hud-icon w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 13.5a4 4 0 1 0 4 0v-8.5a2 2 0 0 0 -4 0v8.5"/>
+            <path d="M10 9l4 0"/>
+          </svg>
           Temperature &amp; Humidity
         </p>
         <div style="position:relative;height:240px;">
@@ -544,7 +670,12 @@
                 border border-slate-200 dark:border-slate-700"
          id="alerts-section">
       <div class="flex items-center justify-between mb-4">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider
+                  flex items-center gap-1.5">
+          <svg class="hud-icon w-3.5 h-3.5" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/>
+            <path d="M9 17v1a3 3 0 0 0 6 0v-1"/>
+          </svg>
           Alerts &amp; Events
         </p>
         <div class="flex gap-1">

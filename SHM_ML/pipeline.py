@@ -7,6 +7,7 @@ of candidate structural defects with scores and supporting evidence.
 
 Usage:
     python3 SHM_ML/pipeline.py                 # load DB + synthetic baseline
+    python3 SHM_ML/pipeline.py --plot          # open matplotlib visualisation
     python3 SHM_ML/pipeline.py --no-db         # fully synthetic (no DB needed)
     python3 SHM_ML/pipeline.py --hours 72      # change analysis window
     python3 SHM_ML/pipeline.py --export csv    # also write results to CSV
@@ -761,6 +762,212 @@ def print_report(
     print(f"\n{'═' * W}\n")
 
 
+def plot_results(
+    df:         pd.DataFrame,
+    anom_df:    pd.DataFrame,
+    features:   dict,
+    ranked:     list[dict],
+    real_start: pd.Timestamp | None,
+) -> None:
+    """
+    Four-panel matplotlib figure:
+      [A] Full strain history — all elements, anomaly points flagged in red
+      [B] Analysis window — Column A with OLS trend line + warn/crit bands
+      [C] Defect score — horizontal bar chart ranked highest to lowest
+      [D] Anomaly decision score — Column A IF score over time (lower = more anomalous)
+    """
+    import matplotlib
+    matplotlib.use("TkAgg" if __import__("sys").platform == "darwin" else "Agg")
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    from matplotlib.gridspec import GridSpec
+
+    PALETTE = ["#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#06b6d4"]
+    DARK_BG  = "#0f172a"
+    CARD_BG  = "#1e293b"
+    TEXT     = "#e2e8f0"
+    GRID     = "#334155"
+
+    fig = plt.figure(figsize=(16, 10), facecolor=DARK_BG)
+    fig.suptitle(
+        f"SHM ML Analysis  ·  {datetime.now():%Y-%m-%d %H:%M}",
+        color=TEXT, fontsize=14, fontweight="bold", y=0.98,
+    )
+    gs = GridSpec(2, 2, figure=fig, hspace=0.42, wspace=0.30,
+                  left=0.07, right=0.97, top=0.93, bottom=0.08)
+
+    strain_cols = [c for c in df.columns if c.startswith("strain_")]
+    label_cols  = [c for c in anom_df.columns if c.endswith("__label")]
+
+    # ── Panel A: full strain history ──────────────────────────────────────
+    ax_a = fig.add_subplot(gs[0, 0])
+    ax_a.set_facecolor(CARD_BG)
+    ax_a.tick_params(colors=TEXT, labelsize=8)
+    for spine in ax_a.spines.values():
+        spine.set_edgecolor(GRID)
+
+    for i, col in enumerate(strain_cols):
+        name  = col.removeprefix("strain_").replace("_", " ")
+        color = PALETTE[i % len(PALETTE)]
+        ax_a.plot(df.index, df[col], color=color, linewidth=0.9,
+                  alpha=0.85, label=name)
+
+        lbl_col = f"{col}__label"
+        if lbl_col in anom_df.columns:
+            mask = anom_df[lbl_col] == -1
+            ax_a.scatter(df.index[mask], df[col][mask],
+                         color="#ef4444", s=8, zorder=5, alpha=0.7)
+
+    if real_start is not None:
+        ax_a.axvline(real_start, color="#f59e0b", linewidth=1.2,
+                     linestyle="--", alpha=0.9, label="Real data starts")
+
+    ax_a.axhline(STRAIN_WARN, color="#f59e0b", linewidth=0.8,
+                 linestyle=":", alpha=0.7)
+    ax_a.axhline(STRAIN_CRIT, color="#ef4444", linewidth=0.8,
+                 linestyle=":", alpha=0.7)
+    ax_a.set_title("Strain History (full dataset)", color=TEXT, fontsize=10, pad=6)
+    ax_a.set_ylabel("μm/m", color=TEXT, fontsize=8)
+    ax_a.tick_params(axis="x", rotation=20)
+    ax_a.yaxis.label.set_color(TEXT)
+    ax_a.xaxis.label.set_color(TEXT)
+    ax_a.grid(color=GRID, linewidth=0.4, alpha=0.6)
+
+    red_dot = mpatches.Patch(color="#ef4444", label="Anomaly (IF)")
+    handles, labels = ax_a.get_legend_handles_labels()
+    ax_a.legend(handles + [red_dot], labels + ["Anomaly (IF)"],
+                fontsize=7, facecolor=CARD_BG, labelcolor=TEXT,
+                framealpha=0.8, loc="upper left")
+
+    # ── Panel B: analysis window + trend ─────────────────────────────────
+    ax_b = fig.add_subplot(gs[0, 1])
+    ax_b.set_facecolor(CARD_BG)
+    ax_b.tick_params(colors=TEXT, labelsize=8)
+    for spine in ax_b.spines.values():
+        spine.set_edgecolor(GRID)
+
+    if real_start is not None:
+        win_df = df[df.index >= real_start]
+    else:
+        win_df = df[df.index >= df.index[-1] - pd.Timedelta(hours=features["window_hours"])]
+
+    primary_col = strain_cols[0]
+    primary_name = primary_col.removeprefix("strain_").replace("_", " ")
+
+    for i, col in enumerate(strain_cols):
+        name = col.removeprefix("strain_").replace("_", " ")
+        ax_b.plot(win_df.index, win_df[col],
+                  color=PALETTE[i], linewidth=1.2, alpha=0.9, label=name)
+
+    # OLS trend for primary element
+    s = win_df[primary_col].dropna()
+    if len(s) >= 10:
+        t0    = s.index[0]
+        hours = np.array([(ts - t0).total_seconds() / 3600 for ts in s.index])
+        vals  = s.values.astype(float)
+        slope, intercept, *_ = __import__("scipy").stats.linregress(hours, vals)
+        trend_vals = intercept + slope * hours
+        ax_b.plot(s.index, trend_vals, color="#a78bfa",
+                  linewidth=1.5, linestyle="--", label=f"{primary_name} trend")
+
+        # Extrapolate 6 h beyond the window
+        extra_h   = 6
+        extra_hrs = np.linspace(hours[-1], hours[-1] + extra_h, 30)
+        extra_ts  = [s.index[-1] + pd.Timedelta(hours=float(h - hours[-1]))
+                     for h in extra_hrs]
+        ax_b.plot(extra_ts, intercept + slope * extra_hrs,
+                  color="#a78bfa", linewidth=1.0, linestyle=":", alpha=0.6)
+
+    ax_b.axhline(STRAIN_WARN, color="#f59e0b", linewidth=1.0,
+                 linestyle="--", alpha=0.85, label=f"Warning ({STRAIN_WARN})")
+    ax_b.axhline(STRAIN_CRIT, color="#ef4444", linewidth=1.0,
+                 linestyle="--", alpha=0.85, label=f"Critical ({STRAIN_CRIT})")
+    ax_b.fill_between(win_df.index, STRAIN_WARN, STRAIN_CRIT,
+                      color="#f59e0b", alpha=0.07)
+    ax_b.fill_between(win_df.index, STRAIN_CRIT,
+                      win_df[strain_cols].max().max() * 1.05,
+                      color="#ef4444", alpha=0.07)
+
+    ax_b.set_title("Analysis Window + OLS Trend", color=TEXT, fontsize=10, pad=6)
+    ax_b.set_ylabel("μm/m", color=TEXT, fontsize=8)
+    ax_b.tick_params(axis="x", rotation=20)
+    ax_b.grid(color=GRID, linewidth=0.4, alpha=0.6)
+    ax_b.legend(fontsize=7, facecolor=CARD_BG, labelcolor=TEXT,
+                framealpha=0.8, loc="upper left")
+
+    # ── Panel C: defect score bar chart ──────────────────────────────────
+    ax_c = fig.add_subplot(gs[1, 0])
+    ax_c.set_facecolor(CARD_BG)
+    ax_c.tick_params(colors=TEXT, labelsize=8)
+    for spine in ax_c.spines.values():
+        spine.set_edgecolor(GRID)
+
+    if ranked:
+        names  = [d["defect"] for d in reversed(ranked)]
+        scores = [d["score"]  for d in reversed(ranked)]
+        confs  = [d["confidence"] for d in reversed(ranked)]
+        colors = ["#ef4444" if c == "HIGH" else "#f59e0b" if c == "MODERATE" else "#3b82f6"
+                  for c in confs]
+        bars = ax_c.barh(names, scores, color=list(reversed(colors)),
+                         height=0.55, alpha=0.88)
+        ax_c.set_xlim(0, 1.05)
+        for bar, score in zip(bars, list(reversed(scores))):
+            ax_c.text(score + 0.02, bar.get_y() + bar.get_height() / 2,
+                      f"{score:.2f}", va="center", color=TEXT, fontsize=8)
+        ax_c.axvline(0.65, color="#ef4444", linewidth=0.8,
+                     linestyle=":", alpha=0.6, label="HIGH threshold")
+        ax_c.axvline(0.35, color="#f59e0b", linewidth=0.8,
+                     linestyle=":", alpha=0.6, label="MODERATE threshold")
+
+    ax_c.set_title("Ranked Defect Scores", color=TEXT, fontsize=10, pad=6)
+    ax_c.set_xlabel("Score (0 – 1)", color=TEXT, fontsize=8)
+    ax_c.grid(axis="x", color=GRID, linewidth=0.4, alpha=0.6)
+    ax_c.legend(fontsize=7, facecolor=CARD_BG, labelcolor=TEXT, framealpha=0.8)
+
+    patches = [
+        mpatches.Patch(color="#ef4444", label="HIGH"),
+        mpatches.Patch(color="#f59e0b", label="MODERATE"),
+        mpatches.Patch(color="#3b82f6", label="LOW"),
+    ]
+    ax_c.legend(handles=patches, fontsize=7, facecolor=CARD_BG,
+                labelcolor=TEXT, framealpha=0.8, loc="lower right")
+
+    # ── Panel D: IF anomaly decision score — primary element ─────────────
+    ax_d = fig.add_subplot(gs[1, 1])
+    ax_d.set_facecolor(CARD_BG)
+    ax_d.tick_params(colors=TEXT, labelsize=8)
+    for spine in ax_d.spines.values():
+        spine.set_edgecolor(GRID)
+
+    score_col = f"{primary_col}__score"
+    if score_col in anom_df.columns:
+        s_score = anom_df[score_col].dropna()
+        ax_d.plot(s_score.index, s_score.values,
+                  color=PALETTE[0], linewidth=0.8, alpha=0.85)
+        ax_d.fill_between(s_score.index, s_score.values, 0,
+                          where=s_score.values < 0,
+                          color="#ef4444", alpha=0.35, label="Anomalous (score < 0)")
+        ax_d.fill_between(s_score.index, s_score.values, 0,
+                          where=s_score.values >= 0,
+                          color="#10b981", alpha=0.20, label="Normal (score ≥ 0)")
+        ax_d.axhline(0, color="#94a3b8", linewidth=0.8, linestyle="--")
+        if real_start is not None:
+            ax_d.axvline(real_start, color="#f59e0b", linewidth=1.2,
+                         linestyle="--", alpha=0.9, label="Real data starts")
+
+    ax_d.set_title(
+        f"Isolation Forest Score — {primary_name}\n"
+        "(negative = anomalous; lower = more extreme)",
+        color=TEXT, fontsize=10, pad=6,
+    )
+    ax_d.set_ylabel("Decision score", color=TEXT, fontsize=8)
+    ax_d.tick_params(axis="x", rotation=20)
+    ax_d.grid(color=GRID, linewidth=0.4, alpha=0.6)
+    ax_d.legend(fontsize=7, facecolor=CARD_BG, labelcolor=TEXT, framealpha=0.8)
+
+    plt.show()
+
+
 def export_csv(
     features: dict, ranked: list[dict], path: Path
 ) -> None:
@@ -775,6 +982,88 @@ def export_csv(
             })
     pd.DataFrame(rows).to_csv(path, index=False)
     print(f"  Results exported to {path}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  COMPUTE REPORT  (callable by the Flask service without argparse)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def compute_report(window_h: int = 48) -> dict:
+    """
+    Run the full ML pipeline and return a JSON-serialisable dict.
+    Called by ml_service.py (Flask) and optionally by main() for the CLI.
+    Results are cached by the service — this function can take 1-3 s.
+    """
+    real_df, element_names = (None, ["Column A", "Column B", "Slab 1"])
+    real_start = None
+
+    if DB_PATH.exists():
+        real_df, element_names = load_db(DB_PATH)
+        real_start = real_df.index[0]
+
+    synth_end   = (real_start - pd.Timedelta(minutes=10)) if real_start else pd.Timestamp.now()
+    synth_start = synth_end - pd.Timedelta(days=SYNTH_DAYS)
+    synth_df    = generate_synthetic(synth_start, SYNTH_DAYS, element_names)
+
+    if real_df is not None:
+        for col in synth_df.columns:
+            if col not in real_df.columns:
+                real_df[col] = np.nan
+        for col in real_df.columns:
+            if col not in synth_df.columns:
+                synth_df[col] = np.nan
+        df = pd.concat([synth_df, real_df]).sort_index()
+    else:
+        df = synth_df.copy()
+
+    anom_df  = detect_anomalies(df, n_train=len(synth_df))
+    features = build_features(df, anom_df, real_start, window_h=window_h)
+    ranked   = rank_defects(features)
+
+    # Anomaly timeline — last 20 flagged readings in the analysis window
+    label_cols = [c for c in anom_df.columns if c.endswith("__label")]
+    timeline = []
+    if label_cols:
+        win = anom_df[anom_df.index >= real_start] if real_start is not None else anom_df
+        flagged = win[(win[label_cols] == -1).any(axis=1)].tail(20)
+        for ts, row in flagged.iterrows():
+            sensors = [
+                c.replace("__label", "").replace("strain_", "strain:")
+                for c in label_cols if row[c] == -1
+            ]
+            timeline.append({"timestamp": ts.isoformat(), "sensors": sensors})
+
+    return {
+        "generated_at":        datetime.now().isoformat(timespec="seconds"),
+        "analysis_end":        features["analysis_end"],
+        "n_readings":          features["n_readings"],
+        "differential_strain": features["differential_strain"],
+        "elements": [
+            {
+                "name":           e["name"],
+                "current_strain": e["current_strain"],
+                "max_strain":     e["max_strain"],
+                "slope_per_hr":   e["slope_per_hr"],
+                "r2":             e["r2"],
+                "anomaly_rate":   e["anomaly_rate"],
+                "pct_above_warn": e["pct_above_warn"],
+                "pct_above_crit": e["pct_above_crit"],
+                "hours_to_crit":  e["hours_to_crit"],
+            }
+            for e in features["elements"]
+        ],
+        "ranked_defects": [
+            {
+                "defect":      d["defect"],
+                "score":       d["score"],
+                "confidence":  d["confidence"],
+                "description": d["description"],
+                "evidence":    d["evidence"],
+            }
+            for d in ranked
+        ],
+        "anomaly_timeline": timeline,
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -796,6 +1085,10 @@ def main() -> int:
     parser.add_argument(
         "--export", choices=["csv"], default=None,
         help="Export ranked results to a file",
+    )
+    parser.add_argument(
+        "--plot", action="store_true",
+        help="Open a matplotlib visualisation window after analysis",
     )
     args = parser.parse_args()
 
@@ -870,6 +1163,10 @@ def main() -> int:
     if args.export == "csv":
         out = Path(__file__).parent / f"results_{datetime.now():%Y%m%d_%H%M%S}.csv"
         export_csv(features, ranked, out)
+
+    if args.plot:
+        print("[Plot] Opening visualisation window…")
+        plot_results(df, anom_df, features, ranked, real_start)
 
     return 0
 
