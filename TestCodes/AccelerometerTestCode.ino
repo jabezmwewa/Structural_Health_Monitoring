@@ -2,8 +2,8 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
 
-
-Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);
+// uses the Adafruit sensor library, which communicates through the ESP32's Wire I²C interface and so the SCL --> GPIO 22 | SDA --> GPIO 21
+Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(12345);  
 
 void setup() {
   Serial.begin(9600);
