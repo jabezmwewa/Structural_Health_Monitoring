@@ -1,3 +1,6 @@
+//OLED SCL goes to GPIO 22
+//OLED SDA goes to GPIO 21
+
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
