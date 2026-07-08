@@ -1,0 +1,271 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+//==========================================================
+// BITMAP 
+//==========================================================
+
+const unsigned char logo[] PROGMEM = {
+
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xbc, 0x00, 0x00, 0x00, 0x00, 0x1f, 0xbf, 0x00, 0x00, 
+	0x00, 0x00, 0xdf, 0xbf, 0xc0, 0x00, 0x00, 0x01, 0xdf, 0xbf, 0xe0, 0x00, 0x00, 0x03, 0xdf, 0xdf, 
+	0xf0, 0x00, 0x00, 0x03, 0xdf, 0xcf, 0xf0, 0x00, 0x00, 0x07, 0x3f, 0xf0, 0x00, 0x00, 0x00, 0x00, 
+	0x7f, 0xff, 0xf8, 0x00, 0x00, 0x0f, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x0f, 0xff, 0xff, 0xfc, 0x00, 
+	0x00, 0x0f, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x00, 0xff, 0xff, 0xfc, 0x00, 0x00, 0x1e, 0xfe, 0x07, 
+	0xfc, 0x00, 0x00, 0x1e, 0x78, 0xf9, 0xc0, 0x00, 0x00, 0x1e, 0x73, 0x7e, 0x1c, 0x00, 0x00, 0x08, 
+	0xe6, 0x7b, 0x7c, 0x00, 0x00, 0x01, 0xed, 0xd9, 0x38, 0x00, 0x00, 0x3f, 0xeb, 0x0d, 0xb8, 0x00, 
+	0x00, 0x3f, 0xce, 0x76, 0xb8, 0x00, 0x00, 0x7f, 0xce, 0xd6, 0xb0, 0x00, 0x00, 0x7f, 0xcf, 0x44, 
+	0xb0, 0x00, 0x00, 0x7f, 0xef, 0x05, 0xb0, 0x00, 0x00, 0xff, 0xed, 0xf7, 0x60, 0x00, 0x00, 0x07, 
+	0xf6, 0x3a, 0x60, 0x00, 0x00, 0x07, 0xf3, 0x98, 0xe0, 0x00, 0x00, 0x07, 0xf8, 0xf8, 0xe0, 0x00, 
+	0x00, 0x07, 0xfe, 0x06, 0xe0, 0x00, 0x00, 0x07, 0xff, 0xbf, 0x60, 0x00, 0x00, 0x07, 0xff, 0xbf, 
+	0x60, 0x00, 0x00, 0x03, 0xff, 0x63, 0x60, 0x00, 0x00, 0x03, 0xfc, 0x6d, 0x60, 0x00, 0x00, 0x00, 
+	0x01, 0xe1, 0x60, 0x00, 0x00, 0x00, 0x01, 0xf3, 0x60, 0x00, 0x00, 0x00, 0x01, 0xf6, 0x00, 0x00, 
+	0x00, 0x00, 0x01, 0xf2, 0x80, 0x00, 0x00, 0x00, 0x01, 0xf2, 0x00, 0x00, 0x00, 0x00, 0x01, 0x93, 
+	0xe0, 0x00, 0x00, 0x00, 0x01, 0x03, 0xe0, 0x00, 0x00, 0x00, 0x01, 0x63, 0x60, 0x00, 0x00, 0x00, 
+	0x01, 0x13, 0xe0, 0x00, 0x00, 0x00, 0x01, 0xb3, 0x60, 0x00, 0x00, 0x00, 0x01, 0xb3, 0xe0, 0x00, 
+	0x00, 0x00, 0x01, 0xb3, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+
+ 
+};
+
+
+
+// Set your bitmap size
+#define LOGO_WIDTH 48
+#define LOGO_HEIGHT 52
+
+//==========================================================
+// PASTE YOUR TEXT ARRAY HERE
+//==========================================================
+const char* text[] = {
+    "........",
+    "",
+    "This is a",
+    "Test code for",
+    "this OLED",
+    "Display",
+    "",
+    "We are",
+    "building a",
+    "Project based",
+    "on Structural",
+    "Health Monitoring.",
+    "",
+
+    "Happy",
+    "Building!",
+    NULL
+};
+
+const int numLines = sizeof(text) / sizeof(text[0]);
+
+//==========================================================
+// TYPEWRITER SETTINGS
+//==========================================================
+
+const int MAX_VISIBLE_LINES = 8;
+
+String visibleLines[MAX_VISIBLE_LINES];
+
+int currentLine = 0;
+int currentChar = 0;
+
+unsigned long lastUpdate = 0;
+
+const int TYPE_DELAY = 40;      // ms between characters
+const int LINE_DELAY = 500;     // pause after each line
+const int SPLASH_DELAY = 2500;
+
+//==========================================================
+
+void showSplashScreen() {
+
+  display.clearDisplay();
+
+  display.drawBitmap(
+      4,
+      (SCREEN_HEIGHT - LOGO_HEIGHT) / 2,
+      logo,
+      LOGO_WIDTH,
+      LOGO_HEIGHT,
+      WHITE);
+
+  display.setTextColor(WHITE);
+
+  display.setTextSize(1.5);
+  display.setCursor(LOGO_WIDTH + 10, 18);
+  display.println("JI TECH");
+
+  display.setTextSize(1);
+  display.setCursor(LOGO_WIDTH + 12, 40);
+  display.println("Group 13");
+
+  display.display();
+
+  delay(SPLASH_DELAY);
+
+  display.clearDisplay();
+  display.display();
+}
+
+//==========================================================
+
+void redrawScreen() {
+
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+
+  for (int i = 0; i < MAX_VISIBLE_LINES; i++) {
+
+    display.setCursor(0, i * 8);
+    display.println(visibleLines[i]);
+
+  }
+
+  display.display();
+
+}
+
+//==========================================================
+
+void scrollUp() {
+
+  for (int i = 0; i < MAX_VISIBLE_LINES - 1; i++) {
+
+    visibleLines[i] = visibleLines[i + 1];
+
+  }
+
+  visibleLines[MAX_VISIBLE_LINES - 1] = "";
+
+}
+
+//==========================================================
+
+void setup() {
+
+  Serial.begin(115200);
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+
+    Serial.println("SSD1306 failed");
+
+    while (1);
+
+  }
+
+  display.clearDisplay();
+
+  showSplashScreen();
+
+  for (int i = 0; i < MAX_VISIBLE_LINES; i++) {
+
+    visibleLines[i] = "";
+
+  }
+
+}
+
+//==========================================================
+
+void loop() {
+
+  static bool waiting = false;
+  static unsigned long waitStart = 0;
+
+  if (currentLine >= numLines) {
+
+    delay(3000);
+
+    currentLine = 0;
+    currentChar = 0;
+
+    for (int i = 0; i < MAX_VISIBLE_LINES; i++)
+      visibleLines[i] = "";
+
+    redrawScreen();
+
+    return;
+
+  }
+
+  if (waiting) {
+
+    if (millis() - waitStart >= LINE_DELAY) {
+
+      waiting = false;
+
+      if (MAX_VISIBLE_LINES > 0 &&
+          visibleLines[MAX_VISIBLE_LINES - 1].length() > 0) {
+
+        bool full = true;
+
+        for (int i = 0; i < MAX_VISIBLE_LINES; i++) {
+
+          if (visibleLines[i] == "") {
+
+            full = false;
+            break;
+
+          }
+
+        }
+
+        if (full)
+          scrollUp();
+
+      }
+
+      currentLine++;
+      currentChar = 0;
+
+    }
+
+    return;
+
+  }
+
+  if (millis() - lastUpdate < TYPE_DELAY)
+    return;
+
+  lastUpdate = millis();
+
+  const char *line = text[currentLine];
+
+  int targetLine = 0;
+
+  while (targetLine < MAX_VISIBLE_LINES &&
+         visibleLines[targetLine] != "")
+    targetLine++;
+
+  if (targetLine >= MAX_VISIBLE_LINES)
+    targetLine = MAX_VISIBLE_LINES - 1;
+
+  if (currentChar < strlen(line)) {
+
+    visibleLines[targetLine] += line[currentChar];
+    currentChar++;
+
+    redrawScreen();
+
+  } else {
+
+    waiting = true;
+    waitStart = millis();
+
+  }
+
+}
+
+
